@@ -53,7 +53,7 @@ namespace B4
         fParticleGun->SetParticleDefinition(particleDefinition);
         
         // Fixed energy: 2.5 MeV
-        fParticleGun->SetParticleEnergy(1.0 * MeV);
+        fParticleGun->SetParticleEnergy(2.5 * MeV);
         
         // Default direction (can be overridden in GeneratePrimaries)
         fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
@@ -71,7 +71,7 @@ namespace B4
         // Set gun position - neutron source positioned to hit the detector
         G4double xpos = 0.0 * cm;    // Center in X
         G4double ypos = 0.0 * cm;    // Center in Y  
-        G4double zpos = 5.0 * cm;    // 5 cm in front of detector (world extends to ±5cm)
+        G4double zpos = 0.6 * cm;    // Positioned to hit the HDPE converter at z ≈ 0.5cm
 
         fParticleGun->SetParticlePosition(G4ThreeVector(xpos, ypos, zpos));
 

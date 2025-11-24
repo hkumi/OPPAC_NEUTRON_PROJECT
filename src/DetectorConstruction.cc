@@ -71,7 +71,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 {
   
     pitch = 0.5 * cm;
-	size = 5.0 * cm;
+    size = 5.0 * cm;
     
   // Define materials
   DefineMaterials();
@@ -221,7 +221,7 @@ void DetectorConstruction::DefineMaterials()
     ArCF4_mpt->AddProperty("SCINTILLATIONCOMPONENT1", gasEnergy, gasScintSp, nScint);
     //ArCF4_mpt->AddProperty("RINDEX", gasScintEnergy, rIndexScint, nScint);
     ArCF4_mpt->AddProperty("RINDEX", "Air");
-    ArCF4_mpt->AddConstProperty("SCINTILLATIONYIELD", 50 / MeV); // Based on nOPPAC notes for Ar:CF4 (90/10)
+    ArCF4_mpt->AddConstProperty("SCINTILLATIONYIELD", 5000 / MeV); // Based on nOPPAC notes for Ar:CF4 (90/10)
     ArCF4_mpt->AddConstProperty("SCINTILLATIONYIELD1", 1.0);
     ArCF4_mpt->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 15 * ns);
     ArCF4_mpt->AddProperty("ABSLENGTH", gasEnergy, gasAbsLength, nScint);
@@ -329,7 +329,28 @@ void DetectorConstruction::DefineMaterials()
     mylar->SetMaterialPropertiesTable(Al_mtp);
 
 
-    G4cout << *(G4Material::GetMaterialTable()) << G4endl;
+    //G4cout << *(G4Material::GetMaterialTable()) << G4endl;
+      //------------------------------------ teflon -----------------------------------
+
+  const G4int TNbEntries = 4;
+  G4Material* Teflon = new G4Material("Teflon", 2.2*g/cm3, 2, kStateSolid);
+  Teflon->AddElement(C, 0.240183);
+  Teflon->AddElement(F, 0.759817);
+
+  G4double pdTeflonPhotonMomentum[TNbEntries]  = {1.0*eV,6.91*eV, 6.98*eV, 7.05*eV};
+  G4double pdTeflonRefractiveIndex[TNbEntries] = {1.34,1.34,1.34,1.34};
+  G4double pdTeflonReflectivity[TNbEntries]    = {0.9,0.9,0.9,0.9};
+  G4double pdTeflonAbsLength[TNbEntries]       = {0.2*mm,0.2*mm,0.2*mm,0.2*mm};
+  G4double pdTeflonScatteringLength[TNbEntries] = {30*cm,30*cm,30*cm,30*cm};
+
+  G4MaterialPropertiesTable *pTeflonPropertiesTable = new G4MaterialPropertiesTable();
+
+  pTeflonPropertiesTable->AddProperty("RINDEX", pdTeflonPhotonMomentum, pdTeflonRefractiveIndex, TNbEntries);
+
+  pTeflonPropertiesTable->AddProperty("ABSLENGTH", pdTeflonPhotonMomentum, pdTeflonAbsLength, TNbEntries);  
+  pTeflonPropertiesTable->AddProperty("RAYLEIGH", pdTeflonPhotonMomentum, pdTeflonScatteringLength, TNbEntries);
+  pTeflonPropertiesTable->AddProperty("REFLECTIVITY", pdTeflonPhotonMomentum, pdTeflonReflectivity, TNbEntries);
+  Teflon->SetMaterialPropertiesTable(pTeflonPropertiesTable);
 
 }
 
@@ -349,14 +370,11 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
   auto mylar = G4Material::GetMaterial("mylar");
   auto HDPE = G4Material::GetMaterial("HDPE");
   auto polystyrene = G4Material::GetMaterial("polystyrene");
+  auto Teflon = G4Material::GetMaterial("Teflon");
 
-  auto BN = G4Material::GetMaterial("BN");
-  auto ZnS = G4Material::GetMaterial("ZnS");
-  auto ZnS_Ag = G4Material::GetMaterial("ZnS_Ag");
-  auto scint = G4Material::GetMaterial("scint");
-  auto Si = G4Material::GetMaterial("G4_Si");
   
-
+  
+ 
   G4RotationMatrix* rot = nullptr;
 
 
@@ -381,14 +399,20 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
 
   G4double sensSize = size;
   G4double sipmSize = 3.16 * mm;
-  
+  // *** NEW: High-resolution SiPM ***
+  //G4double sipmSize = 1.0 * mm;  
 
   // -------------------------- //
   // collimator cell + array
   // -------------------------- //
-  G4double cellSize = sipmSize + 0.84 * mm;
-  G4double cellLength = 30.0 * mm;
+  G4double cellSize = sipmSize + 0.84 * mm;     // = 1.84 mm
+  // Collimator parameters based on paper optimization (15-20mm optimal)
+  G4double collimatorLength = 18.0 * mm;  // Optimal from paper: 15-20mm
+  G4double cellLength = collimatorLength;  // Now using optimized length
+  //G4double cellLength = 30.0 * mm;
   G4double nCells = 25;
+  // *** NEW: number of cells that fit into 100 mm ***
+  //G4double nCells = std::floor(size/cellSize);        //54;   // 54 × 1.84 = 99.36 mm ≈ 100 mm
   G4double collSize = nCells * cellSize;
 
   G4Box* sBlock = new G4Box("cellBlock",
@@ -401,7 +425,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
 	  sBlock, sHole, 0, G4ThreeVector(0, 0, 0));
 
   G4LogicalVolume* fLCell = new G4LogicalVolume(sCell,
-	  PMMA, "Cell");
+	  Teflon, "Cell");
 
   G4int copyNo = 0;
   G4double xPos, yPos;

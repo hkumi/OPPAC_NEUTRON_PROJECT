@@ -63,15 +63,17 @@ namespace B4
       // Creating histograms
       
       analysisManager->CreateH1("Energy_SiPM", "Photon spectrum in SiPMs", 100, 1.5 * eV, 6 * eV, "eV", "none");
-	  analysisManager->CreateH1("SiPM_bottom", "Number of photons detected in top array", 25, 0, 25);
+      analysisManager->CreateH1("SiPM_up", "Number of photons detected in top array", 25, 0, 25);
       analysisManager->CreateH1("SiPM_left", "Number of photons detected in left array", 25, 0, 25);
-      analysisManager->CreateH1("SiPM_up", "Number of photons detected in bottom array", 25, 0, 25);
+      analysisManager->CreateH1("SiPM_bottom", "Number of photons detected in bottom array", 25, 0, 25);
       analysisManager->CreateH1("SiPM_right", "Number of photons detected in right array", 25, 0, 25);
 
 	  //analysisManager->CreateH1("proton_energy", "Recoil proton energy", 100, pow(10, -8) * MeV, 1 * MeV, "MeV", "none", "log");
-	  analysisManager->CreateH1("proton_conv", "Recoil proton energy", 1000, 0, 2 * MeV, "keV", "none");
-	  analysisManager->CreateH1("proton_myl", "Protons reaching mylar sheet", 1000, 0, 2 * MeV, "keV", "none");
-	  analysisManager->CreateH1("proton_gas", "Protons reaching gas volume", 1000, 0, 2 * MeV, "keV", "none");
+      analysisManager->CreateH1("proton_conv", "Recoil proton energy", 1000, 0, 3 * MeV, "keV", "none");
+      analysisManager->CreateH1("proton_myl", "Protons reaching mylar sheet", 1000, 0, 3 * MeV, "keV", "none");
+      analysisManager->CreateH1("proton_gas", "Protons reaching gas volume", 1000, 0, 3 * MeV, "keV", "none");
+
+        
 
       analysisManager->CreateNtuple("B4", "Energy");
       analysisManager->CreateNtupleDColumn("WSF");

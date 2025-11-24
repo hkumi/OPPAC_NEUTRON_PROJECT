@@ -77,6 +77,8 @@ namespace B4a {
 #include "G4ParticleDefinition.hh"
 #include "G4ParticleTypes.hh"
 
+#include "G4SystemOfUnits.hh"  
+#include "G4PhysicalConstants.hh"
 using namespace B4;
 
 namespace B4a
@@ -94,74 +96,83 @@ SteppingAction::SteppingAction(const DetectorConstruction* detConstruction,
 
 void SteppingAction::UserSteppingAction(const G4Step* step)
 {
-// Collect energy and track length step by step
   
-  // get volume of the current step
-  auto volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
-
-  // energy deposit
-  auto edep = step->GetTotalEnergyDeposit();
+  if (!step) return;
+  
+  auto preStepPoint = step->GetPreStepPoint();
+  if (!preStepPoint) return;
+  
+  auto volume = preStepPoint->GetTouchableHandle()->GetVolume();
+  if (!volume) return;
+  
+  G4String volName = volume->GetName();
   auto particle = step->GetTrack()->GetDefinition();
-  G4String volName = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume()->GetName();
+  G4String particleName = particle->GetParticleName();
+  G4double energy = preStepPoint->GetKineticEnergy();
   
-  // process of post and pre step points
-  const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
-  G4String processName = process->GetProcessName();
-  const G4VProcess* preProcess = step->GetPreStepPoint()->GetProcessDefinedStep();
-  G4String preProcessName;
-  if (preProcess) { preProcessName = preProcess->GetProcessName(); }
-  else { preProcessName = "none"; }
-
   auto analysisManager = G4AnalysisManager::Instance();
 
-  G4double photonEnergy = step->GetPreStepPoint()->GetKineticEnergy();
-  G4int pdgCode = particle->GetPDGEncoding();
-  G4double x = step->GetPostStepPoint()->GetPosition().x();
-  G4double y = step->GetPostStepPoint()->GetPosition().y();
-  G4double z = step->GetPostStepPoint()->GetPosition().z();
-
-  G4double prex = step->GetPreStepPoint()->GetPosition().x();
-  G4double prey = step->GetPreStepPoint()->GetPosition().y();
-  G4double prez = step->GetPreStepPoint()->GetPosition().z();
-
-  // Print relevant information
-  //if (particle != G4OpticalPhoton::Definition()) {
-  //    G4cout << particle->GetParticleName() << " event: " << preProcessName << " - " << processName << 
-  //        "; Initial energy: " << photonEnergy << " MeV" << G4endl;
-  //}
-
-  if (particle->GetParticleName() == "proton" && preProcessName == "none") {
-	  G4cout << "Recoil proton produced with energy: " << photonEnergy * 1e3 << " keV " << G4endl;
-	  analysisManager->FillH1(5, photonEnergy);
+  // Debug: Track neutron interactions
+  if (particleName == "neutron") {
+    const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
+    if (process) {
+      G4String processName = process->GetProcessName();
+      if (processName != "Transportation") {
+        G4cout << "NEUTRON INTERACTION: " << processName 
+               << " in " << volName 
+               << " at E=" << energy/MeV << " MeV" << G4endl;
+      }
+    }
   }
 
-  if (volName == "MylA" && particle->GetParticleName() == "proton") {
-	  G4cout << "Proton reached mylar sheet with energy: " << photonEnergy * 1e3 << " keV " << G4endl;
-	  analysisManager->FillH1(6, photonEnergy);
+  //optical photon detection 
+  if (volName == "SiPM" && particleName == "opticalphoton") {
+    G4int copyNo = volume->GetCopyNo();
+    G4cout << "OPTICAL PHOTON DETECTED: SiPM " << copyNo 
+           << " E=" << energy/eV << " eV" << G4endl;
+
+    analysisManager->FillH1(0, energy); // Energy_SiPM histogram
+
+    // Fill the appropriate SiPM array histogram
+    if (copyNo < 25) { 
+        analysisManager->FillH1(1, copyNo); // SiPM_bottom
+    }
+    else if (copyNo < 50) { 
+        analysisManager->FillH1(2, copyNo - 25); // SiPM_left  
+    }
+    else if (copyNo < 75) { 
+        analysisManager->FillH1(3, copyNo - 50); // SiPM_up
+    }
+    else if (copyNo < 100) { 
+        analysisManager->FillH1(4, copyNo - 75); // SiPM_right
+    }
+
+    // Kill the photon after detection
+    step->GetTrack()->SetTrackStatus(fStopAndKill); 
   }
 
-  if (volName == "World" && particle->GetParticleName() == "proton") {
-      G4cout << "Proton entered field region with energy: " << photonEnergy * 1e3 << " keV " << G4endl;
-	  analysisManager->FillH1(7, photonEnergy);
+  //  proton tracking ...
+  if (particleName == "proton") {
+    const G4VProcess* preProcess = step->GetPreStepPoint()->GetProcessDefinedStep();
+    G4String preProcessName = preProcess ? preProcess->GetProcessName() : "none";
+    
+    if (preProcessName == "none") {
+      G4cout << "PROTON CREATED: E=" << energy/MeV << " MeV in " << volName << G4endl;
+      analysisManager->FillH1(5, energy); // proton_conv histogram
+    }
+    
+    if (volName == "MylA") {
+      G4cout << "Proton reached mylar sheet: E=" << energy/MeV << " MeV" << G4endl;
+      analysisManager->FillH1(6, energy); // proton_myl histogram
+    }
+    
+    if (volName == "World") {
+      G4cout << "Proton entered gas volume: E=" << energy/MeV << " MeV" << G4endl;
+      analysisManager->FillH1(7, energy); // proton_gas histogram
+    }
   }
 
-  if (volName == "SiPM" && pdgCode == -22) {
-	  G4int copyNo = volume->GetCopyNo();
-      G4cout << "SiPM " << copyNo << " reached, PDG: " << pdgCode << G4endl;
-
-	  analysisManager->FillH1(0, photonEnergy); 
-
-      if (copyNo < 25) { analysisManager->FillH1(1, copyNo); }
-      else if (copyNo < 50 && copyNo >= 25) { analysisManager->FillH1(2, copyNo - 25); }
-      else if (copyNo < 75 && copyNo >= 50) { analysisManager->FillH1(3, copyNo - 50); }
-	  else if (copyNo < 100 && copyNo >= 75) { analysisManager->FillH1(4, copyNo - 75); }
-
-      step->GetTrack()->SetTrackStatus(fStopAndKill); 
-  }
-  
+ 
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 }
-
