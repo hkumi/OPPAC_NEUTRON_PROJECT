@@ -1,70 +1,3 @@
-//
-// ********************************************************************
-// * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE  and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
-// ********************************************************************
-//
-//
-/// \file B4/B4a/src/SteppingAction.cc
-/// \brief Implementation of the B4a::SteppingAction class
-/// 
-/*
-#include "SteppingAction.hh"
-#include "G4Step.hh"
-#include "G4LogicalVolume.hh"
-#include "G4TouchableHistory.hh"
-#include "G4VPhysicalVolume.hh"
-#include "G4Track.hh"
-#include "G4SystemOfUnits.hh"
-#include "G4StepPoint.hh"
-
-#include "G4ios.hh" // Para usar G4cout
-using namespace B4;
-namespace B4a {
-    SteppingAction::SteppingAction(const DetectorConstruction* detConstruction,
-        EventAction* eventAction)
-        : fDetConstruction(detConstruction),
-        fEventAction(eventAction)
-    {
-    }
-
-    void SteppingAction::UserSteppingAction(const G4Step* step)
-    {
-        // Obtener el punto donde termina el paso
-        G4StepPoint* postPoint = step->GetPostStepPoint();
-        if (!postPoint) return;
-
-        // Obtener volumen físico donde ocurre el paso
-        G4VPhysicalVolume* volume = postPoint->GetTouchableHandle()->GetVolume();
-        if (!volume) return;
-
-        G4String volumeName = volume->GetName();
-
-        // Imprimir nombre del volumen donde ocurre el paso
-        G4cout << "Paso en volumen: " << volumeName << G4endl;
-    }
-
-}
-*/
 #include "SteppingAction.hh"
 #include "EventAction.hh"
 #include "DetectorConstruction.hh"
@@ -72,6 +5,8 @@ namespace B4a {
 #include "G4Step.hh"
 #include "G4RunManager.hh"
 #include "G4AnalysisManager.hh"
+#include "G4EventManager.hh"
+#include "G4Event.hh"
 
 #include "G4LogicalVolumeStore.hh"
 #include "G4ParticleDefinition.hh"
@@ -79,6 +14,7 @@ namespace B4a {
 
 #include "G4SystemOfUnits.hh"  
 #include "G4PhysicalConstants.hh"
+
 using namespace B4;
 
 namespace B4a
@@ -96,83 +32,109 @@ SteppingAction::SteppingAction(const DetectorConstruction* detConstruction,
 
 void SteppingAction::UserSteppingAction(const G4Step* step)
 {
-  
-  if (!step) return;
-  
-  auto preStepPoint = step->GetPreStepPoint();
-  if (!preStepPoint) return;
-  
-  auto volume = preStepPoint->GetTouchableHandle()->GetVolume();
-  if (!volume) return;
-  
-  G4String volName = volume->GetName();
-  auto particle = step->GetTrack()->GetDefinition();
-  G4String particleName = particle->GetParticleName();
-  G4double energy = preStepPoint->GetKineticEnergy();
-  
-  auto analysisManager = G4AnalysisManager::Instance();
-
-  // Debug: Track neutron interactions
-  if (particleName == "neutron") {
-    const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
-    if (process) {
-      G4String processName = process->GetProcessName();
-      if (processName != "Transportation") {
-        G4cout << "NEUTRON INTERACTION: " << processName 
-               << " in " << volName 
-               << " at E=" << energy/MeV << " MeV" << G4endl;
-      }
-    }
-  }
-
-  //optical photon detection 
-  if (volName == "SiPM" && particleName == "opticalphoton") {
-    G4int copyNo = volume->GetCopyNo();
-    G4cout << "OPTICAL PHOTON DETECTED: SiPM " << copyNo 
-           << " E=" << energy/eV << " eV" << G4endl;
-
-    analysisManager->FillH1(0, energy); // Energy_SiPM histogram
-
-    // Fill the appropriate SiPM array histogram
-    if (copyNo < 25) { 
-        analysisManager->FillH1(1, copyNo); // SiPM_bottom
-    }
-    else if (copyNo < 50) { 
-        analysisManager->FillH1(2, copyNo - 25); // SiPM_left  
-    }
-    else if (copyNo < 75) { 
-        analysisManager->FillH1(3, copyNo - 50); // SiPM_up
-    }
-    else if (copyNo < 100) { 
-        analysisManager->FillH1(4, copyNo - 75); // SiPM_right
-    }
-
-    // Kill the photon after detection
-    step->GetTrack()->SetTrackStatus(fStopAndKill); 
-  }
-
-  //  proton tracking ...
-  if (particleName == "proton") {
-    const G4VProcess* preProcess = step->GetPreStepPoint()->GetProcessDefinedStep();
-    G4String preProcessName = preProcess ? preProcess->GetProcessName() : "none";
+    if (!step) return;
     
-    if (preProcessName == "none") {
-      G4cout << "PROTON CREATED: E=" << energy/MeV << " MeV in " << volName << G4endl;
-      analysisManager->FillH1(5, energy); // proton_conv histogram
-    }
+    auto preStepPoint = step->GetPreStepPoint();
+    if (!preStepPoint) return;
     
-    if (volName == "MylA") {
-      G4cout << "Proton reached mylar sheet: E=" << energy/MeV << " MeV" << G4endl;
-      analysisManager->FillH1(6, energy); // proton_myl histogram
-    }
+    auto volume = preStepPoint->GetTouchableHandle()->GetVolume();
+    if (!volume) return;
     
-    if (volName == "World") {
-      G4cout << "Proton entered gas volume: E=" << energy/MeV << " MeV" << G4endl;
-      analysisManager->FillH1(7, energy); // proton_gas histogram
+    G4String volName = volume->GetName();
+    auto particle = step->GetTrack()->GetDefinition();
+    G4String particleName = particle->GetParticleName();
+    G4double energy = preStepPoint->GetKineticEnergy();
+    
+    auto analysisManager = G4AnalysisManager::Instance();
+    
+    // Get current event ID
+    G4int eventID = 0;
+    G4Event* currentEvent = G4EventManager::GetEventManager()->GetNonconstCurrentEvent();
+    if (currentEvent) {
+        eventID = currentEvent->GetEventID();
     }
-  }
 
- 
+    // Debug: Track neutron interactions
+    if (particleName == "neutron") {
+        const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
+        if (process) {
+            G4String processName = process->GetProcessName();
+            if (processName != "Transportation") {
+                G4cout << "NEUTRON INTERACTION: " << processName 
+                       << " in " << volName 
+                       << " at E=" << energy/MeV << " MeV" << G4endl;
+            }
+        }
+    }
+
+    // Optical photon detection 
+    if (volName == "SiPM" && particleName == "opticalphoton") {
+        G4int copyNo = volume->GetCopyNo();
+        G4double photonEnergy = preStepPoint->GetKineticEnergy();
+        G4double time = preStepPoint->GetGlobalTime();
+        
+        // Get sensor position
+        G4ThreeVector position = volume->GetTranslation();
+        
+        G4cout << "OPTICAL PHOTON DETECTED: Event " << eventID 
+               << ", SiPM " << copyNo 
+               << " E=" << photonEnergy/eV << " eV" 
+               << " Pos(" << position.x()/mm << ", " << position.y()/mm << ") mm" << G4endl;
+
+        // Fill detailed sensor data ntuple
+        analysisManager->FillNtupleIColumn(1, 0, eventID);              // EventID
+        analysisManager->FillNtupleIColumn(1, 1, copyNo);               // SensorID
+        analysisManager->FillNtupleDColumn(1, 2, position.x()/mm);      // PosX (mm)
+        analysisManager->FillNtupleDColumn(1, 3, position.y()/mm);      // PosY (mm)
+        analysisManager->FillNtupleDColumn(1, 4, photonEnergy/eV);      // Energy (eV)
+        analysisManager->FillNtupleDColumn(1, 5, time/ns);              // Time (ns)
+        analysisManager->FillNtupleIColumn(1, 6, 1);                    // PhotonCount (1 per step)
+        analysisManager->AddNtupleRow(1);
+        
+        // Also update histograms for quick look
+        analysisManager->FillH1(0, photonEnergy); // Energy_SiPM histogram
+
+        // Fill the appropriate SiPM array histogram (for 54 sensors per array)
+        if (copyNo < 54) { 
+            analysisManager->FillH1(1, copyNo); // SiPM_bottom
+        }
+        else if (copyNo < 108) { 
+            analysisManager->FillH1(2, copyNo - 54); // SiPM_left  
+        }
+        else if (copyNo < 162) { 
+            analysisManager->FillH1(3, copyNo - 108); // SiPM_up
+        }
+        else if (copyNo < 216) { 
+            analysisManager->FillH1(4, copyNo - 162); // SiPM_right
+        }
+
+        // Kill the photon after detection
+        step->GetTrack()->SetTrackStatus(fStopAndKill); 
+    }
+
+    // Proton tracking
+    if (particleName == "proton") {
+        const G4VProcess* preProcess = step->GetPreStepPoint()->GetProcessDefinedStep();
+        G4String preProcessName = preProcess ? preProcess->GetProcessName() : "none";
+        
+        if (preProcessName == "none") {
+            G4cout << "PROTON CREATED: Event " << eventID 
+                   << " E=" << energy/MeV << " MeV in " << volName << G4endl;
+            analysisManager->FillH1(5, energy); // proton_conv histogram
+        }
+        
+        if (volName == "MylA") {
+            G4cout << "Proton reached mylar sheet: E=" << energy/MeV << " MeV" << G4endl;
+            analysisManager->FillH1(6, energy); // proton_myl histogram
+        }
+        
+        if (volName == "World") {
+            G4cout << "Proton entered gas volume: E=" << energy/MeV << " MeV" << G4endl;
+            analysisManager->FillH1(7, energy); // proton_gas histogram
+        }
+    }
 }
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 }

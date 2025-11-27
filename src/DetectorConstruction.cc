@@ -398,7 +398,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
   G4double sensGap = 1.1 * mm;
 
   G4double sensSize = size;
-  G4double sipmSize = 3.16 * mm;
+  G4double sipmSize = 1.00 * mm;
   // *** NEW: High-resolution SiPM ***
   //G4double sipmSize = 1.0 * mm;  
 
@@ -410,9 +410,9 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
   G4double collimatorLength = 18.0 * mm;  // Optimal from paper: 15-20mm
   G4double cellLength = collimatorLength;  // Now using optimized length
   //G4double cellLength = 30.0 * mm;
-  G4double nCells = 25;
+  //G4double nCells = 25;
   // *** NEW: number of cells that fit into 100 mm ***
-  //G4double nCells = std::floor(size/cellSize);        //54;   // 54 × 1.84 = 99.36 mm ≈ 100 mm
+  G4double nCells = std::floor(fBoxSize/cellSize);        //54;   // 54 × 1.84 = 99.36 mm ≈ 100 mm
   G4double collSize = nCells * cellSize;
 
   G4Box* sBlock = new G4Box("cellBlock",

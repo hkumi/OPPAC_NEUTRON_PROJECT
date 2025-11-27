@@ -63,15 +63,15 @@ namespace B4
       // Creating histograms
       
       analysisManager->CreateH1("Energy_SiPM", "Photon spectrum in SiPMs", 100, 1.5 * eV, 6 * eV, "eV", "none");
-      analysisManager->CreateH1("SiPM_up", "Number of photons detected in top array", 25, 0, 25);
-      analysisManager->CreateH1("SiPM_left", "Number of photons detected in left array", 25, 0, 25);
-      analysisManager->CreateH1("SiPM_bottom", "Number of photons detected in bottom array", 25, 0, 25);
-      analysisManager->CreateH1("SiPM_right", "Number of photons detected in right array", 25, 0, 25);
+      analysisManager->CreateH1("SiPM_up", "Number of photons detected in top array", 54, 0, 54);
+      analysisManager->CreateH1("SiPM_left", "Number of photons detected in left array", 54, 0, 54);
+      analysisManager->CreateH1("SiPM_bottom", "Number of photons detected in bottom array", 54, 0, 54);
+      analysisManager->CreateH1("SiPM_right", "Number of photons detected in right array", 54, 0, 54);
 
 	  //analysisManager->CreateH1("proton_energy", "Recoil proton energy", 100, pow(10, -8) * MeV, 1 * MeV, "MeV", "none", "log");
-      analysisManager->CreateH1("proton_conv", "Recoil proton energy", 1000, 0, 3 * MeV, "keV", "none");
-      analysisManager->CreateH1("proton_myl", "Protons reaching mylar sheet", 1000, 0, 3 * MeV, "keV", "none");
-      analysisManager->CreateH1("proton_gas", "Protons reaching gas volume", 1000, 0, 3 * MeV, "keV", "none");
+      analysisManager->CreateH1("proton_conv", "Recoil proton energy", 1000, 0, 2.5 * MeV, "keV", "none");
+      analysisManager->CreateH1("proton_myl", "Protons reaching mylar sheet", 1000, 0, 2.5 * MeV, "keV", "none");
+      analysisManager->CreateH1("proton_gas", "Protons reaching gas volume", 1000, 0, 2.5 * MeV, "keV", "none");
 
         
 
@@ -81,6 +81,26 @@ namespace B4
       analysisManager->CreateNtupleDColumn("InitialEnergy");
       
       analysisManager->FinishNtuple();
+
+      // Create ntuple for sensor data
+    analysisManager->CreateNtuple("SensorData", "Optical Photon Detections");
+    analysisManager->CreateNtupleIColumn("EventID");        // Event number
+    analysisManager->CreateNtupleIColumn("SensorID");       // Sensor copy number (0-215 for 54×4)
+    analysisManager->CreateNtupleDColumn("PosX");           // Sensor X position
+    analysisManager->CreateNtupleDColumn("PosY");           // Sensor Y position  
+    analysisManager->CreateNtupleDColumn("Energy");         // Photon energy
+    analysisManager->CreateNtupleDColumn("Time");           // Detection time
+    analysisManager->CreateNtupleIColumn("PhotonCount");    // Number of photons detected
+    analysisManager->FinishNtuple();
+    
+    // Also create an event summary ntuple
+    analysisManager->CreateNtuple("EventSummary", "Event Summary Data");
+    analysisManager->CreateNtupleIColumn("EventID");
+    analysisManager->CreateNtupleDColumn("BeamX");          // True beam position X
+    analysisManager->CreateNtupleDColumn("BeamY");          // True beam position Y
+    analysisManager->CreateNtupleIColumn("TotalPhotons");   // Total photons in event
+    analysisManager->CreateNtupleIColumn("SensorsHit");     // Number of sensors with signal
+    analysisManager->FinishNtuple();
     }
 
     //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
