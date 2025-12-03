@@ -63,25 +63,18 @@ namespace B4
       // Creating histograms
       
       analysisManager->CreateH1("Energy_SiPM", "Photon spectrum in SiPMs", 100, 1.5 * eV, 6 * eV, "eV", "none");
-      analysisManager->CreateH1("SiPM_up", "Number of photons detected in top array", 54, 0, 54);
-      analysisManager->CreateH1("SiPM_left", "Number of photons detected in left array", 54, 0, 54);
-      analysisManager->CreateH1("SiPM_bottom", "Number of photons detected in bottom array", 54, 0, 54);
-      analysisManager->CreateH1("SiPM_right", "Number of photons detected in right array", 54, 0, 54);
+      analysisManager->CreateH1("SiPM_bottom", "Number of photons detected in bottom array", 25, 0, 25);
+      analysisManager->CreateH1("SiPM_left", "Number of photons detected in left array", 25, 0, 25);
+      analysisManager->CreateH1("SiPM_up", "Number of photons detected in top array", 25, 0, 25);
+      analysisManager->CreateH1("SiPM_right", "Number of photons detected in right array", 25, 0, 25);
 
 	  //analysisManager->CreateH1("proton_energy", "Recoil proton energy", 100, pow(10, -8) * MeV, 1 * MeV, "MeV", "none", "log");
       analysisManager->CreateH1("proton_conv", "Recoil proton energy", 1000, 0, 2.5 * MeV, "keV", "none");
       analysisManager->CreateH1("proton_myl", "Protons reaching mylar sheet", 1000, 0, 2.5 * MeV, "keV", "none");
       analysisManager->CreateH1("proton_gas", "Protons reaching gas volume", 1000, 0, 2.5 * MeV, "keV", "none");
 
-        
-
-      analysisManager->CreateNtuple("B4", "Energy");
-      analysisManager->CreateNtupleDColumn("WSF");
-      analysisManager->CreateNtupleDColumn("SiPM");
-      analysisManager->CreateNtupleDColumn("InitialEnergy");
       
-      analysisManager->FinishNtuple();
-
+      
       // Create ntuple for sensor data
     analysisManager->CreateNtuple("SensorData", "Optical Photon Detections");
     analysisManager->CreateNtupleIColumn("EventID");        // Event number
@@ -92,18 +85,17 @@ namespace B4
     analysisManager->CreateNtupleDColumn("Time");           // Detection time
     analysisManager->CreateNtupleIColumn("PhotonCount");    // Number of photons detected
     analysisManager->FinishNtuple();
-    
-    // Also create an event summary ntuple
-    analysisManager->CreateNtuple("EventSummary", "Event Summary Data");
-    analysisManager->CreateNtupleIColumn("EventID");
-    analysisManager->CreateNtupleDColumn("BeamX");          // True beam position X
-    analysisManager->CreateNtupleDColumn("BeamY");          // True beam position Y
-    analysisManager->CreateNtupleIColumn("TotalPhotons");   // Total photons in event
-    analysisManager->CreateNtupleIColumn("SensorsHit");     // Number of sensors with signal
-    analysisManager->FinishNtuple();
+     // Create ntuple for SiMs data
+    // Add these to your histogram creation:
+analysisManager->CreateH1("Xbottom_pos", "X positions in bottom array", 100, 20, 45, "mm");
+analysisManager->CreateH1("Yleft_pos", "Y positions in left array", 100, 20, 45, "mm");
+analysisManager->CreateH1("Xtop_pos", "X positions in top array", 100, -45, -20, "mm");
+analysisManager->CreateH1("Yright_pos", "Y positions in right array", 100, -45, -20, "mm");
+   
+       
     }
 
-    //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+        //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
     void RunAction::BeginOfRunAction(const G4Run* /*run*/)
     {

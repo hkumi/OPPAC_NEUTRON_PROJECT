@@ -82,6 +82,6 @@ namespace B4
         fParticleGun->GeneratePrimaryVertex(anEvent);
         
         // Optional: Log the event for debugging
-        G4cout << "Generated 2.5 MeV neutron at (" << xpos/cm << ", " << ypos/cm << ", " << zpos/cm << ") cm" << G4endl;
+        //G4cout << "Generated 2.5 MeV neutron at (" << xpos/cm << ", " << ypos/cm << ", " << zpos/cm << ") cm" << G4endl;
     }
 }

@@ -31,6 +31,7 @@
 
 #include "G4Material.hh"
 #include "G4NistManager.hh"
+#include "G4SDManager.hh"
 
 #include "G4Box.hh"
 #include "G4Tubs.hh"
@@ -398,21 +399,21 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
   G4double sensGap = 1.1 * mm;
 
   G4double sensSize = size;
-  G4double sipmSize = 1.00 * mm;
+  //G4double sipmSize = 3.16 * mm;
   // *** NEW: High-resolution SiPM ***
-  //G4double sipmSize = 1.0 * mm;  
+  G4double sipmSize = 1.0 * mm;  
 
   // -------------------------- //
   // collimator cell + array
   // -------------------------- //
   G4double cellSize = sipmSize + 0.84 * mm;     // = 1.84 mm
   // Collimator parameters based on paper optimization (15-20mm optimal)
-  G4double collimatorLength = 18.0 * mm;  // Optimal from paper: 15-20mm
+  G4double collimatorLength = 10.0 * mm;  // Optimal from paper: 15-20mm
   G4double cellLength = collimatorLength;  // Now using optimized length
   //G4double cellLength = 30.0 * mm;
-  //G4double nCells = 25;
+  G4double nCells = 25;
   // *** NEW: number of cells that fit into 100 mm ***
-  G4double nCells = std::floor(fBoxSize/cellSize);        //54;   // 54 × 1.84 = 99.36 mm ≈ 100 mm
+  //G4double nCells = std::floor(fBoxSize/cellSize);        //54;   // 54 × 1.84 = 99.36 mm ≈ 100 mm
   G4double collSize = nCells * cellSize;
 
   G4Box* sBlock = new G4Box("cellBlock",
@@ -427,7 +428,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
   G4LogicalVolume* fLCell = new G4LogicalVolume(sCell,
 	  Teflon, "Cell");
 
-  G4int copyNo = 0;
+    G4int copyNo = 0;
   G4double xPos, yPos;
   for (G4int i = 0; i < 4; i++) {
 
@@ -451,7 +452,6 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
 
       }
   }
-
   // Optical properties // --------------------------------------------------------
   auto sipmSurf = new G4OpticalSurface("sipmSurf");
   sipmSurf->SetType(dielectric_dielectric);
@@ -521,7 +521,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
 	  G4ThreeVector(0, 0, convPos), fLConv, "Conv", fLBox, false, 0, true);
 
 
-  // -------------------------- //
+   // -------------------------- //
   // SiPMs
   // -------------------------- //
   G4double sipmWidth = 1.0 * mm;
@@ -557,7 +557,6 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
 
       }
   }
-
   new G4LogicalBorderSurface("MylarA-Air_in", fPBox, fPMylA, mylarSurf);
   new G4LogicalBorderSurface("MylarA-Air_out", fPMylA, fPBox, mylarSurf);
 
@@ -793,7 +792,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
 
 void DetectorConstruction::ConstructSDandField()
 {
-  // Create global magnetic field messenger.
+     // Create global magnetic field messenger.
   // Uniform magnetic field is then created automatically if
   // the field value is not zero.
   G4ThreeVector fieldValue;
@@ -804,7 +803,4 @@ void DetectorConstruction::ConstructSDandField()
   G4AutoDelete::Register(fMagFieldMessenger);
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-}
-
+} 
