@@ -60,13 +60,13 @@ public:
         // Bottom array (0-53) - sensors below active area
         for (int i = 0; i < sensorsPerArray; i++) {
             double x = startPos + i * cellSize;
-            double y = -arrayLength/2 - 15.0; // 15mm from active area
+            double y = -50.0; // Fixed Y position for bottom array
             sensorMap[i] = std::make_pair(x, y);
         }
         
         // Left array (54-107) - sensors left of active area
         for (int i = 0; i < sensorsPerArray; i++) {
-            double x = -arrayLength/2 - 15.0;
+            double x = -50.0; // Fixed X position for left array
             double y = startPos + i * cellSize;
             sensorMap[i + sensorsPerArray] = std::make_pair(x, y);
         }
@@ -74,13 +74,13 @@ public:
         // Top array (108-161) - sensors above active area
         for (int i = 0; i < sensorsPerArray; i++) {
             double x = startPos + i * cellSize;
-            double y = arrayLength/2 + 15.0;
+            double y = 50.0; // Fixed Y position for top array
             sensorMap[i + 2*sensorsPerArray] = std::make_pair(x, y);
         }
         
         // Right array (162-215) - sensors right of active area
         for (int i = 0; i < sensorsPerArray; i++) {
-            double x = arrayLength/2 + 15.0;
+            double x =  50.0; // Fixed X position for right array
             double y = startPos + i * cellSize;
             sensorMap[i + 3*sensorsPerArray] = std::make_pair(x, y);
         }
@@ -243,7 +243,7 @@ public:
             for (const auto& hit : hits) {
                 totalPhotons += hit.photonCount;
             }
-            if (totalPhotons < 10) continue; // Minimum threshold
+            if (totalPhotons < 1) continue; // Minimum threshold
             
             auto pos = ReconstructPosition_Weighted(eventID);
             reconstructedX.push_back(pos.first);
@@ -364,6 +364,12 @@ public:
                                        100, -50, 50, 100, -50, 50);
         TH2D* hResidual2D = new TH2D("hResidual2D", "2D Position Residuals; #Delta X (mm); #Delta Y (mm)", 
                                     100, -10, 10, 100, -10, 10);
+
+        // NEW: Separate histograms for reconstructed X and Y
+        TH1D* hReconstructedX = new TH1D("hReconstructedX", "Reconstructed X Positions; X (mm); Counts", 
+                                    100, -50, 50);
+        TH1D* hReconstructedY = new TH1D("hReconstructedY", "Reconstructed Y Positions; Y (mm); Counts", 
+                                    100, -50, 50);
         
         // Fill histograms
         for (size_t i = 0; i < residualsX.size(); i++) {
@@ -372,6 +378,8 @@ public:
             hResidualR->Fill(residualsR[i]);
             hReconstructed->Fill(reconstructedX[i], reconstructedY[i]);
             hResidual2D->Fill(residualsX[i], residualsY[i]);
+            hReconstructedX->Fill(reconstructedX[i]);  // NEW: Fill X positions
+            hReconstructedY->Fill(reconstructedY[i]);  // NEW: Fill Y positions
         }
         
         // Create detailed plots
@@ -401,6 +409,32 @@ public:
         hResidualY->SetTitle("Y Residuals with Gaussian Fit; #Delta Y (mm); Counts");
         
         c1->SaveAs("highres_reconstruction_1mm.png");
+
+        // NEW: Canvas for separate X and Y reconstruction
+    TCanvas* c3 = new TCanvas("c3", "Separate X and Y Reconstruction", 1200, 600);
+    c3->Divide(2, 2);
+    
+    c3->cd(1);
+    hReconstructedX->Draw();
+    hReconstructedX->SetLineColor(kBlue);
+    hReconstructedX->SetLineWidth(2);
+    hReconstructedX->Fit("gaus");
+    hReconstructedX->SetTitle("Reconstructed X Positions; X (mm); Counts");
+    
+    c3->cd(2);
+    hReconstructedY->Draw();
+    hReconstructedY->SetLineColor(kRed);
+    hReconstructedY->SetLineWidth(2);
+    hReconstructedY->Fit("gaus");
+    hReconstructedY->SetTitle("Reconstructed Y Positions; Y (mm); Counts");
+
+    c3->cd(3);
+        hReconstructed->Draw("colz");
+        hReconstructed->SetTitle("Reconstructed Positions (1mm sensors); X (mm); Y (mm)");
+
+    
+    c3->SaveAs("separate_XY_reconstruction_1mm.png");
+    
         
         // Additional canvas for radial distribution
         TCanvas* c2 = new TCanvas("c2", "Radial Distribution", 600, 400);
