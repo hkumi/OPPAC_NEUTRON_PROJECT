@@ -31,7 +31,9 @@
 #define B4aSteppingAction_h 1
 
 #include "G4UserSteppingAction.hh"
-
+#include <vector>  
+#include <fstream>
+#include "globals.hh"
 namespace B4
 {
   class DetectorConstruction;
@@ -56,10 +58,16 @@ public:
   ~SteppingAction() override = default;
 
   void UserSteppingAction(const G4Step* step) override;
-
+  void SaveEventData(G4int eventID); 
 private:
   const B4::DetectorConstruction* fDetConstruction = nullptr;
   EventAction* fEventAction = nullptr;
+  std::vector<double> fXBottom;
+  std::vector<double> fXTop;
+  std::vector<double> fYLeft;
+  std::vector<double> fYRight;
+  G4int fCurrentEventID;
+  
 };
 
 }
