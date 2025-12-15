@@ -69,7 +69,7 @@ namespace B4
         // Energy is already set to 2.5 MeV in constructor
         
         // Set gun position - neutron source positioned to hit the detector
-        G4double xpos = 0.0 * cm;    // Center in X
+        G4double xpos = -1.2 * cm;    // Center in X
         G4double ypos = 0.0 * cm;    // Center in Y  
         G4double zpos = 0.6 * cm;    // Positioned to hit the HDPE converter at z ≈ 0.5cm
 

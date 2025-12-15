@@ -218,8 +218,19 @@ void DetectorConstruction::DefineMaterials()
       4 * m, 4 * m, 4 * m, 4 * m, 4 * m,
       4 * m, 4 * m, 4 * m
     };
+
+    G4double gasScatLength[nScint];
+     for (int i = 0; i < nScint; i++) {
+         gasScatLength[i] = 5.0 * cm;  // Start with 5 cm scattering length
+    }
+
+    G4double gasRIndex[nScint];
+     for (int i = 0; i < nScint; i++) {
+     gasRIndex[i] = 1.0005;  // Refractive index for Ar:CF4 gas
+    }
     auto ArCF4_mpt = new G4MaterialPropertiesTable();
     ArCF4_mpt->AddProperty("SCINTILLATIONCOMPONENT1", gasEnergy, gasScintSp, nScint);
+    ArCF4_mpt->AddProperty("RAYLEIGH", gasEnergy, gasScatLength, nScint);
     //ArCF4_mpt->AddProperty("RINDEX", gasScintEnergy, rIndexScint, nScint);
     ArCF4_mpt->AddProperty("RINDEX", "Air");
     ArCF4_mpt->AddConstProperty("SCINTILLATIONYIELD", 5000 / MeV); // Based on nOPPAC notes for Ar:CF4 (90/10)
@@ -408,7 +419,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
   // -------------------------- //
   G4double cellSize = sipmSize + 0.84 * mm;     // = 1.84 mm
   // Collimator parameters based on paper optimization (15-20mm optimal)
-  G4double collimatorLength = 10.0 * mm;  // Optimal from paper: 15-20mm
+  G4double collimatorLength = 5.0 * mm;  // Optimal from paper: 15-20mm
   G4double cellLength = collimatorLength;  // Now using optimized length
   //G4double cellLength = 30.0 * mm;
   G4double nCells = 25;
