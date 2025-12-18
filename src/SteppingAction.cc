@@ -15,35 +15,44 @@
 #include "G4SystemOfUnits.hh"  
 #include "G4PhysicalConstants.hh"
 
-using namespace B4;
+// For Gaussian fitting
+#include "TH1D.h"
+#include "TF1.h"
+#include <algorithm>
+#include <cmath>
+#include <fstream>
 
-namespace B4a
+
+namespace B4
 {
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SteppingAction::SteppingAction(const DetectorConstruction* detConstruction,
+SteppingAction::SteppingAction(const B4::DetectorConstruction* detConstruction,
                                EventAction* eventAction)
   : fDetConstruction(detConstruction),
-    fEventAction(eventAction)
+    fEventAction(eventAction),
+    fCurrentEventID(-1)
+{}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+SteppingAction::~SteppingAction()
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void SteppingAction::SaveEventData(G4int eventID)
 {
-    // Save to a text file for macro processing
-    std::ofstream outfile;
-    outfile.open("position_data.txt", std::ios_base::app);
+    std::ofstream outfile("position_data.txt", std::ios_base::app);
+    if (!outfile) return;
     
-    // Format: EventID nBottom nTop nLeft nRight bottom_positions... top_positions... left_positions... right_positions...
-    outfile << eventID << " ";
-    outfile << fXBottom.size() << " ";
-    outfile << fXTop.size() << " ";
-    outfile << fYLeft.size() << " ";
-    outfile << fYRight.size() << " ";
+    outfile << eventID << " "
+            << fXBottom.size() << " "
+            << fXTop.size() << " "
+            << fYLeft.size() << " "
+            << fYRight.size() << " ";
     
-    // Write all positions
     for (double x : fXBottom) outfile << x << " ";
     for (double x : fXTop) outfile << x << " ";
     for (double y : fYLeft) outfile << y << " ";
@@ -52,6 +61,8 @@ void SteppingAction::SaveEventData(G4int eventID)
     outfile << "\n";
     outfile.close();
 }
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void SteppingAction::UserSteppingAction(const G4Step* step)
 {
@@ -67,7 +78,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     auto particle = step->GetTrack()->GetDefinition();
     G4String particleName = particle->GetParticleName();
     G4double energy = preStepPoint->GetKineticEnergy();
-    //G4ThreeVector posPhotons = postStepPoint->GetPosition();//accessing the position
     
     auto analysisManager = G4AnalysisManager::Instance();
     
@@ -76,6 +86,20 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     G4Event* currentEvent = G4EventManager::GetEventManager()->GetNonconstCurrentEvent();
     if (currentEvent) {
         eventID = currentEvent->GetEventID();
+    }
+
+    // Check if this is a new event
+    if (eventID != fCurrentEventID) {
+        // Save previous event data if we have any
+        if (fCurrentEventID >= 0 && (!fXBottom.empty() || !fXTop.empty() || !fYLeft.empty() || !fYRight.empty())) {
+            SaveEventData(fCurrentEventID);
+        }
+        // Reset for new event
+        fCurrentEventID = eventID;
+        fXBottom.clear();
+        fXTop.clear();
+        fYLeft.clear();
+        fYRight.clear();
     }
 
     // Optical photon detection 
@@ -93,70 +117,43 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         G4double y = step->GetPostStepPoint()->GetPosition().y()/mm;
         G4double z = step->GetPostStepPoint()->GetPosition().z()/mm;
 
-        // ===== DEBUG OUTPUT =====
-    G4cout << "\n=== PHOTON HIT DEBUG ===" << G4endl;
-    G4cout << "Event ID: " << eventID << G4endl;
-    G4cout << "Sensor copyNo: " << copyNo << G4endl;
-    G4cout << "Sensor (volume) position: (" << posX << ", " << posY << ", 0) mm" << G4endl;
-    G4cout << "Hit (post-step) position: (" << x << ", " << y << ", " << z << ") mm" << G4endl;
-    G4cout << "Distance from sensor center: " 
-           << std::sqrt((x-posX)*(x-posX) + (y-posY)*(y-posY)) << " mm" << G4endl;
-        // STORE POSITIONS FOR MACRO PROCESSING (NEW CODE)
-       // Check if this is a new event
-       if (eventID != fCurrentEventID) {
-        // Save previous event data if we have any
-           if (!fXBottom.empty() || !fXTop.empty() || !fYLeft.empty() || !fYRight.empty()) {
-               SaveEventData(fCurrentEventID);
-           }
-        // Reset for new event
-        fCurrentEventID = eventID;
-        fXBottom.clear();
-        fXTop.clear();
-        fYLeft.clear();
-        fYRight.clear();
-       }
-        // Fill detailed sensor data ntuple
+        // DEBUG OUTPUT (optional)
+        // G4cout << "\n=== PHOTON HIT ===" << G4endl;
+        // G4cout << "Event ID: " << eventID << G4endl;
+        // G4cout << "Sensor copyNo: " << copyNo << G4endl;
+        
+        // Fill detailed sensor data ntuple (ntuple 0)
         analysisManager->FillNtupleIColumn(0, 0, eventID);              // EventID
         analysisManager->FillNtupleIColumn(0, 1, copyNo);               // SensorID
-        analysisManager->FillNtupleDColumn(0, 2, x);      // PosX (mm)
-        analysisManager->FillNtupleDColumn(0, 3, y);      // PosY (mm)
+        analysisManager->FillNtupleDColumn(0, 2, posX);                 // PosX (mm)
+        analysisManager->FillNtupleDColumn(0, 3, posY);                 // PosY (mm)
         analysisManager->FillNtupleDColumn(0, 4, photonEnergy/eV);      // Energy (eV)
         analysisManager->FillNtupleDColumn(0, 5, time/ns);              // Time (ns)
-        analysisManager->FillNtupleIColumn(0, 6, 1);                    // PhotonCount (1 per step)
+        analysisManager->FillNtupleIColumn(0, 6, 1);                    // PhotonCount
         analysisManager->AddNtupleRow(0);
         
-        // Also update histograms for quick look
-        analysisManager->FillH1(0, photonEnergy); // Energy_SiPM histogram
+        // Update histograms
+        analysisManager->FillH1(0, photonEnergy);
 
-        // Fill the appropriate SiPM array histogram (for 25 sensors per array)
+        // Store positions based on sensor location
         if (copyNo < 25) { 
-            fXBottom.push_back(x);
-            analysisManager->FillH1(1, copyNo); // SiPM_bottom
-            analysisManager->FillH1(8, x);      // Xbottom_pos (X position) -
-
-
-
+            fXBottom.push_back(posX);
+            analysisManager->FillH1(1, copyNo);
         }
-        else if (copyNo < 50 && copyNo >= 25) {
-             fYLeft.push_back(y); 
-            analysisManager->FillH1(2, copyNo - 25); // SiPM_left
-             analysisManager->FillH1(9, y);           // Yleft_pos (Y position)
-  
+        else if (copyNo < 50) {
+            fYLeft.push_back(posY); 
+            analysisManager->FillH1(2, copyNo - 25);
         }
-        else if (copyNo < 75 && copyNo >= 50) {
-             fXTop.push_back(x);  
-            analysisManager->FillH1(3, copyNo - 50); // SiPM_up
-             analysisManager->FillH1(10, x);           // Xtop_pos (X position)
-
+        else if (copyNo < 75) {
+            fXTop.push_back(posX);  
+            analysisManager->FillH1(3, copyNo - 50);
         }
-        else if (copyNo < 100 && copyNo >= 75) {
-             fYRight.push_back(y); 
-            analysisManager->FillH1(4, copyNo - 75); // SiPM_right
-             analysisManager->FillH1(11, y);           // Yright_pos (Y position)
-
+        else if (copyNo < 100) {
+            fYRight.push_back(posY); 
+            analysisManager->FillH1(4, copyNo - 75);
         }
 
-        // Kill the photon after detection
+        // Kill the photon
         step->GetTrack()->SetTrackStatus(fStopAndKill); 
     }
 
@@ -166,21 +163,146 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         G4String preProcessName = preProcess ? preProcess->GetProcessName() : "none";
         
         if (preProcessName == "none") {
-            //G4cout << "PROTON CREATED: Event " << eventID 
-                   //<< " E=" << energy/MeV << " MeV in " << volName << G4endl;
-            analysisManager->FillH1(5, energy); // proton_conv histogram
+            analysisManager->FillH1(5, energy);
         }
         
         if (volName == "MylA") {
-            //G4cout << "Proton reached mylar sheet: E=" << energy/MeV << " MeV" << G4endl;
-            analysisManager->FillH1(6, energy); // proton_myl histogram
+            analysisManager->FillH1(6, energy);
         }
         
         if (volName == "World") {
-            //G4cout << "Proton entered gas volume: E=" << energy/MeV << " MeV" << G4endl;
-            analysisManager->FillH1(7, energy); // proton_gas histogram
+            analysisManager->FillH1(7, energy);
         }
     }
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void SteppingAction::FillReconstructedPosition(G4int eventID)
+{
+    auto analysisManager = G4AnalysisManager::Instance();
+    
+    // Get sizes
+    G4int nBottom = fXBottom.size();
+    G4int nTop = fXTop.size();
+    G4int nLeft = fYLeft.size();
+    G4int nRight = fYRight.size();
+    G4int nTotal = nBottom + nTop + nLeft + nRight;
+    
+    // Skip events with no photons
+    if (nTotal == 0) return;
+    
+    // Function to calculate Gaussian stats
+    auto getGaussianStats = [eventID](const std::vector<G4double>& positions,
+                                     G4double& mean, G4double& sigma, G4double& N) {
+        N = positions.size();
+        if (N == 0) {
+            mean = 0.0;
+            sigma = 1.0;
+            return;
+        }
+        
+        if (N < 5) {
+            // Simple stats
+            G4double sum = 0.0;
+            for (G4double pos : positions) sum += pos;
+            mean = sum / N;
+            
+            G4double sumSq = 0.0;
+            for (G4double pos : positions) sumSq += (pos - mean) * (pos - mean);
+            sigma = std::sqrt(sumSq / N);
+            if (sigma < 0.1) sigma = 0.1;
+            return;
+        }
+        
+        // Gaussian fit
+        G4double minVal = *std::min_element(positions.begin(), positions.end());
+        G4double maxVal = *std::max_element(positions.begin(), positions.end());
+        G4double range = maxVal - minVal;
+        
+        minVal -= 0.1 * range;
+        maxVal += 0.1 * range;
+        
+        TH1D* hist = new TH1D(("h_temp_" + std::to_string(eventID)).c_str(), 
+                              "Temp histogram", 100, minVal, maxVal);
+        
+        for (G4double pos : positions) hist->Fill(pos);
+        
+        TF1* gauss = new TF1("gauss", "gaus", minVal, maxVal);
+        gauss->SetParameters(N/10.0, (minVal + maxVal)/2.0, range/4.0);
+        hist->Fit(gauss, "QN");
+        
+        mean = gauss->GetParameter(1);
+        sigma = gauss->GetParameter(2);
+        
+        delete hist;
+        delete gauss;
+        
+        if (sigma <= 0 || !std::isfinite(sigma)) {
+            // Fallback
+            G4double sum = 0.0;
+            for (G4double pos : positions) sum += pos;
+            mean = sum / N;
+            
+            G4double sumSq = 0.0;
+            for (G4double pos : positions) sumSq += (pos - mean) * (pos - mean);
+            sigma = std::sqrt(sumSq / N);
+            if (sigma < 0.1) sigma = 0.1;
+        }
+    };
+    
+    // Calculate stats
+    G4double Px1, sigmaX1, Nx1;  // Bottom
+    G4double Px2, sigmaX2, Nx2;  // Top
+    G4double Py1, sigmaY1, Ny1;  // Left
+    G4double Py2, sigmaY2, Ny2;  // Right
+    
+    getGaussianStats(fXBottom, Px1, sigmaX1, Nx1);
+    getGaussianStats(fXTop, Px2, sigmaX2, Nx2);
+    getGaussianStats(fYLeft, Py1, sigmaY1, Ny1);
+    getGaussianStats(fYRight, Py2, sigmaY2, Ny2);
+    
+    // Apply paper formula
+    G4double xWeighted = 0.0, yWeighted = 0.0;
+    
+    // X reconstruction
+    G4double numeratorX = 0.0;
+    G4double denominatorX = 0.0;
+    
+    if (Nx1 > 0 && sigmaX1 > 0) {
+        numeratorX += Px1 * Nx1 / sigmaX1;
+        denominatorX += Nx1 / sigmaX1;
+    }
+    if (Nx2 > 0 && sigmaX2 > 0) {
+        numeratorX += Px2 * Nx2 / sigmaX2;
+        denominatorX += Nx2 / sigmaX2;
+    }
+    if (denominatorX > 0) {
+        xWeighted = numeratorX / denominatorX;
+    }
+    
+    // Y reconstruction
+    G4double numeratorY = 0.0;
+    G4double denominatorY = 0.0;
+    
+    if (Ny1 > 0 && sigmaY1 > 0) {
+        numeratorY += Py1 * Ny1 / sigmaY1;
+        denominatorY += Ny1 / sigmaY1;
+    }
+    if (Ny2 > 0 && sigmaY2 > 0) {
+        numeratorY += Py2 * Ny2 / sigmaY2;
+        denominatorY += Ny2 / sigmaY2;
+    }
+    if (denominatorY > 0) {
+        yWeighted = numeratorY / denominatorY;
+    }
+    
+    // Fill reconstructed positions ntuple (ntuple 1)
+    analysisManager->FillNtupleIColumn(1, 0, eventID);
+    analysisManager->FillNtupleDColumn(1, 1, xWeighted);
+    analysisManager->FillNtupleDColumn(1, 2, yWeighted);
+    analysisManager->FillNtupleDColumn(1, 3, nTotal);
+    analysisManager->AddNtupleRow(1);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -419,7 +419,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
   // -------------------------- //
   G4double cellSize = sipmSize + 0.84 * mm;     // = 1.84 mm
   // Collimator parameters based on paper optimization (15-20mm optimal)
-  G4double collimatorLength = 5.0 * mm;  // Optimal from paper: 15-20mm
+  G4double collimatorLength = 10.0 * mm;  // Optimal from paper: 15-20mm
   G4double cellLength = collimatorLength;  // Now using optimized length
   //G4double cellLength = 30.0 * mm;
   G4double nCells = 25;

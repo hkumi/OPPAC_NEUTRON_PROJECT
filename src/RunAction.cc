@@ -86,12 +86,12 @@ namespace B4
     analysisManager->CreateNtupleIColumn("PhotonCount");    // Number of photons detected
     analysisManager->FinishNtuple();
      // Create ntuple for SiMs data
-    // Add these to your histogram creation:
-analysisManager->CreateH1("Xbottom_pos", "X positions in bottom array", 100, 20, 45, "mm");
-analysisManager->CreateH1("Yleft_pos", "Y positions in left array", 100, 20, 45, "mm");
-analysisManager->CreateH1("Xtop_pos", "X positions in top array", 100, -45, -20, "mm");
-analysisManager->CreateH1("Yright_pos", "Y positions in right array", 100, -45, -20, "mm");
-   
+    analysisManager->CreateNtuple("ReconstructedPositions", "Reconstructed X,Y positions");
+    analysisManager->CreateNtupleIColumn(1, "EventID");
+    analysisManager->CreateNtupleDColumn(1, "X_reconstructed");
+    analysisManager->CreateNtupleDColumn(1, "Y_reconstructed");
+    analysisManager->CreateNtupleDColumn(1, "N_total");
+    analysisManager->FinishNtuple(1);
        
     }
 
