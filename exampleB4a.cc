@@ -45,7 +45,7 @@
 #include "G4EmStandardPhysics_option4.hh"
 #include "G4ParticleHPManager.hh"
 #include "G4TrajectoryDrawByParticleID.hh"
-
+#include "G4OpRayleigh.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -129,12 +129,13 @@ int main(int argc,char** argv)
   //auto physicsList = new FTFP_BERT();
   //auto physicsList = new QGSP_BERT_HP;
   auto physicsList = new FTFP_BERT_HP;
-  //physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
+  physicsList->ReplacePhysics(new G4EmStandardPhysics_option4());
   auto opticalPhysics = new G4OpticalPhysics();
   physicsList->RegisterPhysics(opticalPhysics);
   runManager->SetUserInitialization(physicsList);
 
-  auto actionInitialization = new B4a::ActionInitialization(detConstruction);
+  auto actionInitialization = new B4::ActionInitialization(detConstruction);
+  //auto actionInitialization = new ActionInitialization(detConstruction);
   runManager->SetUserInitialization(actionInitialization);
 
   // Replace HP environmental variables with C++ calls (from Hadr04)
