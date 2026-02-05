@@ -55,13 +55,8 @@ SteppingAction::SteppingAction(const DetectorConstruction* detConstruction,
 
 void SteppingAction::UserSteppingAction(const G4Step* step)
 {
-// Collect energy and track length step by step
-
   // get volume of the current step
   auto volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
-
-  // energy deposit
-  auto edep = step->GetTotalEnergyDeposit();
   auto particle = step->GetTrack()->GetDefinition();
   G4String volName = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume()->GetName();
   
@@ -75,52 +70,47 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 
   auto analysisManager = G4AnalysisManager::Instance();
 
-  G4double photonEnergy = step->GetPreStepPoint()->GetKineticEnergy();
+  G4double particleEnergy = step->GetPreStepPoint()->GetKineticEnergy();
   G4int pdgCode = particle->GetPDGEncoding();
-  G4double x = step->GetPostStepPoint()->GetPosition().x();
-  G4double y = step->GetPostStepPoint()->GetPosition().y();
-  G4double z = step->GetPostStepPoint()->GetPosition().z();
 
-  G4double prex = step->GetPreStepPoint()->GetPosition().x();
-  G4double prey = step->GetPreStepPoint()->GetPosition().y();
-  G4double prez = step->GetPreStepPoint()->GetPosition().z();
-
-  // Print relevant information
-  //if (particle != G4OpticalPhoton::Definition()) {
-  //    G4cout << particle->GetParticleName() << " event: " << preProcessName << " - " << processName << 
-  //        "; Initial energy: " << photonEnergy << " MeV" << G4endl;
-  //}
-
+  // Proton energy tracking 
   if (particle->GetParticleName() == "proton" && preProcessName == "none") {
-	  //G4cout << "Recoil proton produced with energy: " << photonEnergy * 1e3 << " keV " << G4endl;
-	  analysisManager->FillH1(8, photonEnergy);  // Changed from 5 to 8 for proton_conv
+      analysisManager->FillH1(10, particleEnergy);  // proton_conv
   }
 
   if (volName == "MylA" && particle->GetParticleName() == "proton") {
-	 // G4cout << "Proton reached mylar sheet with energy: " << photonEnergy * 1e3 << " keV " << G4endl;
-	  analysisManager->FillH1(9, photonEnergy);  // Changed from 6 to 9 for proton_myl
+      analysisManager->FillH1(11, particleEnergy);  // proton_myl
   }
 
   if (volName == "World" && particle->GetParticleName() == "proton") {
-      //G4cout << "Proton entered field region with energy: " << photonEnergy * 1e3 << " keV " << G4endl;
-	  analysisManager->FillH1(10, photonEnergy); // Changed from 7 to 10 for proton_gas
+      analysisManager->FillH1(12, particleEnergy);  // proton_gas
   }
 
-  if (volName == "SiPM" && pdgCode == -22) {
-	 G4int copyNo = volume->GetCopyNo();
-      //G4cout << "SiPM " << copyNo << " reached, PDG: " << pdgCode << G4endl;
+  // OPTICAL PHOTON HANDLING 
+  if (volName == "SiPM" && particle == G4OpticalPhoton::Definition()) {
+      G4int copyNo = volume->GetCopyNo();
+      
+      // FILL PHOTON ENERGY HISTOGRAM 
+      analysisManager->FillH1(0, particleEnergy);  // Photon_Energy histogram
+      
+      // Fill SiPM histograms (count photons per sensor)
+      if (copyNo < 25) { 
+          analysisManager->FillH1(1, copyNo);  // SiPM_top
+      }
+      else if (copyNo < 50) { 
+          analysisManager->FillH1(2, copyNo - 25);  // SiPM_bottom
+      }
+      else if (copyNo < 75) { 
+          analysisManager->FillH1(3, copyNo - 50);  // SiPM_left
+      }
+      else if (copyNo < 100) { 
+          analysisManager->FillH1(4, copyNo - 75);  // SiPM_right
+      }
 
-      // Fill SiPM histograms (indices 1-4 as before)
-      if (copyNo < 25) { analysisManager->FillH1(1, copyNo); }
-      else if (copyNo < 50 && copyNo >= 25) { analysisManager->FillH1(2, copyNo - 25); }
-      else if (copyNo < 75 && copyNo >= 50) { analysisManager->FillH1(3, copyNo - 50); }
-	  else if (copyNo < 100 && copyNo >= 75) { analysisManager->FillH1(4, copyNo - 75); }
-
-      step->GetTrack()->SetTrackStatus(fStopAndKill); 
+      
+      step->GetTrack()->SetTrackStatus(fStopAndKill);  
   }
-  
 }
-
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 }

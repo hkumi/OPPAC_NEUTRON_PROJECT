@@ -26,7 +26,7 @@ namespace B4
 
         // 1D Histograms:
         analysisManager->CreateH1("Photon_Energy", "Photon energy spectrum in SiPMs", 
-                                  100, 1.5 * eV, 6 * eV);               // Histogram ID 0
+                                  100, 1.5 * eV, 6 * eV,"eV", "none");               // Histogram ID 0
         
         // Note: Histograms 1-4 are used in SteppingAction.cc, not detector.cc
         // but you're filling them in SteppingAction so we keep them
@@ -55,11 +55,11 @@ namespace B4
         
         // Proton energy histograms (used in SteppingAction):
         analysisManager->CreateH1("proton_conv", "Recoil proton energy", 
-                                  1000, 0, 2 * MeV, "keV");             // Histogram ID 10
+                                  1000, 0, 1 * MeV, "keV", "none");             // Histogram ID 10
         analysisManager->CreateH1("proton_myl", "Protons reaching mylar sheet", 
-                                  1000, 0, 2 * MeV, "keV");             // Histogram ID 11
+                                  1000, 0, 1 * MeV, "keV", "none");             // Histogram ID 11
         analysisManager->CreateH1("proton_gas", "Protons reaching gas volume", 
-                                  1000, 0, 2 * MeV, "keV");             // Histogram ID 12
+                                  1000, 0, 1 * MeV, "keV", "none");             // Histogram ID 12
         
         // Resolution magnitude histogram (used in ReconstructFullEvent):
         analysisManager->CreateH1("Resolution_Mag", "Position resolution magnitude", 

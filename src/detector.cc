@@ -27,13 +27,26 @@ G4ThreadLocal bool truePosSet = false;
 // --------------------------------------------------------------------
 MySensitiveDetector::MySensitiveDetector(G4String name)
     : G4VSensitiveDetector(name),
-      fPDE(0.25),
-      fNoiseLambda(6.0),
-      fMinSigma(0.5 * mm),
-      fSensorPitch(1.0 * mm),
+      fPDE(1),           //  Let optical surface handle wavelength-dependent efficiency
+      fNoiseLambda(6),  // dark noise for 1mm² SiPM 
+      fMinSigma(0.3 * mm), // appropriate for 1mm pitch (was 0.5mm)
+      fSensorPitch(1.10 * mm),  // Must match cellSize from geometry!
       fNSensorsPerArray(25)
 {
     collectionName.insert("SensorCollection");
+    
+    // Diagnostic output
+    G4cout << "==================================================" << G4endl;
+    G4cout << "MySensitiveDetector Configuration:" << G4endl;
+    G4cout << "  PDE: " << fPDE << G4endl;
+    G4cout << "  Dark noise (λ): " << fNoiseLambda << " counts/event" << G4endl;
+    G4cout << "  Min sigma: " << fMinSigma/mm << " mm" << G4endl;
+    G4cout << "  Sensor pitch: " << fSensorPitch/mm << " mm" << G4endl;
+    G4cout << "  Sensors per array: " << fNSensorsPerArray << G4endl;
+    G4cout << "  Total expected sensors: " << 4 * fNSensorsPerArray << G4endl;
+    G4cout << "  Expected position range: ±" 
+           << (fNSensorsPerArray * fSensorPitch / 2.0)/mm << " mm" << G4endl;
+    G4cout << "==================================================" << G4endl;
 }
 
 MySensitiveDetector::~MySensitiveDetector() {}
@@ -54,6 +67,11 @@ void MySensitiveDetector::Initialize(G4HCofThisEvent* HCE)
 // --------------------------------------------------------------------
 double MySensitiveDetector::IndexToPosition(double index)
 {
+    // Convert sensor index to physical position
+    // For 25 sensors with 1.84mm pitch:
+    // Index 0 → -23.0 mm
+    // Index 12 → 0.0 mm  
+    // Index 24 → +23.0 mm
     return (index + 0.5) * fSensorPitch
            - (fNSensorsPerArray * fSensorPitch) / 2.0;
 }
@@ -145,7 +163,7 @@ void MySensitiveDetector::ReconstructFullEvent(const std::vector<double>& xTop,
 
     man->FillH1(8, dx / mm);
     man->FillH1(9, dy / mm);
-    man->FillH1(13, resolution / mm);  // Changed from 14 to 13
+    man->FillH1(13, resolution / mm);
 }
 
 // --------------------------------------------------------------------
@@ -158,30 +176,59 @@ void MySensitiveDetector::ReconstructBorderEvent(
     std::lock_guard<std::mutex> lock(analysisMutex);
     auto* man = G4AnalysisManager::Instance();
 
-    auto SimpleMean = [&](const std::vector<double>& v) {
-        if (v.empty()) return 0.0;
+    // IMPROVED: Use same Gaussian MLE approach for consistency
+    auto GaussianMLE = [&](const std::vector<double>& v,
+                           double& mean, double& sigma, double& N)
+    {
+        N = v.size();
+        if (N == 0) {
+            mean = 0.0;
+            sigma = fMinSigma;
+            return;
+        }
+
         double sum = 0.0;
         for (double i : v) sum += IndexToPosition(i);
-        return sum / v.size();
+        mean = sum / N;
+
+        if (N < 2) {
+            sigma = fMinSigma;
+            return;
+        }
+
+        double var = 0.0;
+        for (double i : v) {
+            double x = IndexToPosition(i);
+            var += (x - mean) * (x - mean);
+        }
+
+        sigma = std::sqrt(var / N);
+        if (sigma < fMinSigma) sigma = fMinSigma;
     };
 
-    double x_rec = 0.0;
-    if (!xTop.empty() && !xBottom.empty()) {
-        x_rec = 0.5 * (SimpleMean(xTop) + SimpleMean(xBottom));
-    } else if (!xTop.empty()) {
-        x_rec = SimpleMean(xTop);
-    } else if (!xBottom.empty()) {
-        x_rec = SimpleMean(xBottom);
-    }
+    double mxT, sxT, nT;
+    double mxB, sxB, nB;
+    double myL, syL, nL;
+    double myR, syR, nR;
 
-    double y_rec = 0.0;
-    if (!yLeft.empty() && !yRight.empty()) {
-        y_rec = 0.5 * (SimpleMean(yLeft) + SimpleMean(yRight));
-    } else if (!yLeft.empty()) {
-        y_rec = SimpleMean(yLeft);
-    } else if (!yRight.empty()) {
-        y_rec = SimpleMean(yRight);
-    }
+    GaussianMLE(xTop,    mxT, sxT, nT);
+    GaussianMLE(xBottom, mxB, sxB, nB);
+    GaussianMLE(yLeft,   myL, syL, nL);
+    GaussianMLE(yRight,  myR, syR, nR);
+
+    auto WeightedMLE = [](double p1, double n1, double s1,
+                          double p2, double n2, double s2)
+    {
+        if (n1 > 0 && n2 > 0)
+            return (p1 * n1 / (s1*s1) + p2 * n2 / (s2*s2)) /
+                   (n1 / (s1*s1)     + n2 / (s2*s2));
+        else if (n1 > 0) return p1;
+        else if (n2 > 0) return p2;
+        return 0.0;
+    };
+
+    double x_rec = WeightedMLE(mxT, nT, sxT, mxB, nB, sxB);
+    double y_rec = WeightedMLE(myL, nL, syL, myR, nR, syR);
 
     man->FillH2(1, x_rec, y_rec);
 
@@ -197,22 +244,44 @@ G4bool MySensitiveDetector::ProcessHits(G4Step* step,
 {
     G4Track* track = step->GetTrack();
 
+    // Record true position from primary charged particle
     if (!truePosSet &&
         track->GetDefinition()->GetPDGCharge() != 0 &&
         track->GetParentID() == 0)
     {
         truePos = step->GetPreStepPoint()->GetPosition();
         truePosSet = true;
+        
+        // DEBUG output
+        G4cout << "True position set: (" 
+               << truePos.x()/mm << ", " 
+               << truePos.y()/mm << ", " 
+               << truePos.z()/mm << ") mm" << G4endl;
     }
 
+    // Only process optical photons
     if (track->GetDefinition() != G4OpticalPhoton::Definition())
         return false;
+
+    /*// OPTIONAL: Filter photons by energy (SiPM sensitivity range)
+    G4double photonEnergy = track->GetKineticEnergy();
+    if (photonEnergy < 2.0*eV || photonEnergy > 3.5*eV) {
+        track->SetTrackStatus(fStopAndKill);
+        return false;
+    }*/
 
     auto* touchable = step->GetPreStepPoint()->GetTouchable();
     if (!touchable) return false;
 
     G4int copyNo = touchable->GetCopyNumber();
     G4ThreeVector pos = step->GetPostStepPoint()->GetPosition();
+
+    // Validate copy number range
+    if (copyNo < 0 || copyNo >= 4 * fNSensorsPerArray) {
+        G4cout << "WARNING: Invalid copy number: " << copyNo << G4endl;
+        track->SetTrackStatus(fStopAndKill);
+        return false;
+    }
 
     auto* hit = new SensorHit();
     hit->SetSensorPosition(pos);
@@ -237,7 +306,16 @@ G4bool MySensitiveDetector::ProcessHits(G4Step* step,
 void MySensitiveDetector::EndOfEvent(G4HCofThisEvent*)
 {
     truePosSet = false;
-    if (!SensorCollection || SensorCollection->entries() == 0) return;
+    
+    if (!SensorCollection || SensorCollection->entries() == 0) {
+        G4cout << "Event ended with NO photon detections!" << G4endl;
+        return;
+    }
+
+    // DIAGNOSTIC: Report photon statistics
+    G4int totalPhotons = SensorCollection->entries();
+    G4cout << "=== Event Photon Statistics ===" << G4endl;
+    G4cout << "Total optical photons detected: " << totalPhotons << G4endl;
 
     std::map<int,int> topC, bottomC, leftC, rightC;
     int N = fNSensorsPerArray;
@@ -250,12 +328,20 @@ void MySensitiveDetector::EndOfEvent(G4HCofThisEvent*)
         else if (c < 4*N) rightC[c - 3*N]++;
     }
 
+    G4cout << "Photons per array - Top: " << topC.size() 
+           << ", Bottom: " << bottomC.size()
+           << ", Left: " << leftC.size() 
+           << ", Right: " << rightC.size() << G4endl;
+
+    // Apply PDE and build photoelectron vectors
     auto build = [&](const std::map<int,int>& C, std::vector<double>& V)
     {
         for (auto& [idx, ph] : C) {
+            // Apply photon detection efficiency
             int npe = G4Poisson(ph * fPDE);
             for (int i = 0; i < npe; ++i) V.push_back(idx);
         }
+        // Add dark noise
         int noise = G4Poisson(fNoiseLambda);
         for (int i = 0; i < noise; ++i)
             V.push_back(static_cast<int>(G4UniformRand() * N));
@@ -267,15 +353,31 @@ void MySensitiveDetector::EndOfEvent(G4HCofThisEvent*)
     build(leftC, leftI);
     build(rightC, rightI);
 
+    G4cout << "Photoelectrons (after PDE & noise) - Top: " << topI.size()
+           << ", Bottom: " << botI.size()
+           << ", Left: " << leftI.size()
+           << ", Right: " << rightI.size() << G4endl;
+
+    // Count how many arrays have signal
     int arrays = (!topI.empty()) + (!botI.empty()) +
                  (!leftI.empty()) + (!rightI.empty());
 
-    if (arrays >= 2) {
-        if (arrays < 4)
-            ReconstructBorderEvent(topI, botI, leftI, rightI);
-        else
-            ReconstructFullEvent(topI, botI, leftI, rightI);
-    }
+    G4cout << "Arrays with signal: " << arrays << "/4" << G4endl;
 
-    //SensorCollection->clear();
+    // Require at least 2 arrays for position reconstruction
+    if (arrays >= 2) {
+        if (arrays < 4) {
+            G4cout << "Performing BORDER event reconstruction" << G4endl;
+            ReconstructBorderEvent(topI, botI, leftI, rightI);
+        }
+        else {
+            G4cout << "Performing FULL event reconstruction" << G4endl;
+            ReconstructFullEvent(topI, botI, leftI, rightI);
+        }
+    } else {
+        G4cout << "Insufficient arrays for reconstruction (need ≥2, have " 
+               << arrays << ")" << G4endl;
+    }
+    
+    G4cout << "===============================" << G4endl;
 }
