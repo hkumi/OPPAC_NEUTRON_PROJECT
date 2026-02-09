@@ -92,9 +92,7 @@ namespace B4
             analysisManager->FinishNtuple();
         }
 
-        // REMOVED: Weighted_X and Weighted_Y ntuples (not being filled in detector.cc)
-        // REMOVED: Original B4 ntuple (not being used)
-
+       
         // Add a single reconstruction ntuple that includes both full and border events:
         analysisManager->CreateNtuple("Reconstruction", "Event reconstruction data");  // Ntuple ID 4
         analysisManager->CreateNtupleDColumn("recX");

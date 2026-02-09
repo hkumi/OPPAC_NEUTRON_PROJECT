@@ -27,9 +27,9 @@ G4ThreadLocal bool truePosSet = false;
 // --------------------------------------------------------------------
 MySensitiveDetector::MySensitiveDetector(G4String name)
     : G4VSensitiveDetector(name),
-      fPDE(1),           //  Let optical surface handle wavelength-dependent efficiency
+      fPDE(1),           //   optical surface handle wavelength-dependent efficiency
       fNoiseLambda(6),  // dark noise for 1mm² SiPM 
-      fMinSigma(0.3 * mm), // appropriate for 1mm pitch (was 0.5mm)
+      fMinSigma(0.3 * mm), // appropriate for 1mm pitch 
       fSensorPitch(1.10 * mm),  // Must match cellSize from geometry!
       fNSensorsPerArray(25)
 {
@@ -176,7 +176,7 @@ void MySensitiveDetector::ReconstructBorderEvent(
     std::lock_guard<std::mutex> lock(analysisMutex);
     auto* man = G4AnalysisManager::Instance();
 
-    // IMPROVED: Use same Gaussian MLE approach for consistency
+   
     auto GaussianMLE = [&](const std::vector<double>& v,
                            double& mean, double& sigma, double& N)
     {
@@ -263,7 +263,7 @@ G4bool MySensitiveDetector::ProcessHits(G4Step* step,
     if (track->GetDefinition() != G4OpticalPhoton::Definition())
         return false;
 
-    /*// OPTIONAL: Filter photons by energy (SiPM sensitivity range)
+    /*// Filter photons by energy (SiPM sensitivity range)
     G4double photonEnergy = track->GetKineticEnergy();
     if (photonEnergy < 2.0*eV || photonEnergy > 3.5*eV) {
         track->SetTrackStatus(fStopAndKill);

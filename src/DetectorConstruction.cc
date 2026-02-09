@@ -219,7 +219,7 @@ void DetectorConstruction::DefineMaterials()
     air->SetMaterialPropertiesTable(air_mpt);
     vacuum->SetMaterialPropertiesTable(air_mpt);
 
-    // Scintillating gas - CORRECTED scintillation yield
+    // Scintillating gas -  scintillation yield
     const G4int nScint = 18;
     G4double gasEnergy[nScint] = {
       1.55 * eV, 1.61 * eV, 1.70 * eV, 1.78 * eV, 1.88 * eV,
@@ -239,7 +239,7 @@ void DetectorConstruction::DefineMaterials()
       4 * m, 4 * m, 4 * m, 4 * m, 4 * m,
       4 * m, 4 * m, 4 * m
     };
-    auto ArCF4_mpt = new G4MaterialPropertiesTable();
+     auto ArCF4_mpt = new G4MaterialPropertiesTable();
     ArCF4_mpt->AddProperty("SCINTILLATIONCOMPONENT1", gasEnergy, gasScintSp, nScint);
     ArCF4_mpt->AddProperty("RINDEX", "Air");
     // CRITICAL: Use realistic scintillation yield
@@ -344,7 +344,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
   G4double sensPitch = pitch;
   G4double sensGap = 1.1 * mm;
 
-  // OPTIMIZED: 1mm sensor size matching your MySensitiveDetector::fSensorPitch
+  // OPTIMIZED: 1mm sensor size 
   G4double sensSize = 1.0 * mm; 
   G4double sipmSize = 1.0 * mm; // Match the sensor size to hole size
   
@@ -369,7 +369,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
   G4SubtractionSolid* sCell = new G4SubtractionSolid("cell",
       sBlock, sHole, 0, G4ThreeVector(0, 0, 0));
 
-  // CORRECTED: Use Teflon for highly reflective collimator
+  //  Use Teflon for highly reflective collimator
   G4LogicalVolume* fLCell = new G4LogicalVolume(sCell,
       Teflon, "Cell");
 
@@ -501,8 +501,8 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
 
       for (G4int j = 0; j < nCells; j++) {
 
-          // CORRECTED POSITIONING: Place sensors just outside collimator exit
-          // Position = collimator_center + collimator_half_length + air_gap + sensor_half_width
+          // Place sensors just outside collimator exit
+          // Position = collimator_center + collimator_half_length  + sensor_half_width
           if (i == 0 || i == 2) {
               xPos = (collSize / 2 + cellLength  + sipmWidth/2) * std::cos(angle);
               yPos = ((-1.0 * nCells / 2 + 1.0 * j + 1.0 / 2) * cellSize) + 
