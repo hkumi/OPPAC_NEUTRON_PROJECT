@@ -4,7 +4,7 @@
 // * The  Geant4 software  is  copyright of the Copyright Holders  of *
 // * the Geant4 Collaboration.  It is provided  under  the terms  and *
 // * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
+// * LICENSE and available at http://cern.ch/geant4/license .  These *
 // * include a list of copyright holders.                             *
 // *                                                                  *
 // * Neither the authors of this software system, nor their employing *
@@ -22,9 +22,9 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-//
 /// \file B4/B4a/src/PrimaryGeneratorAction.cc
 /// \brief Implementation of the B4::PrimaryGeneratorAction class
+
 #include "PrimaryGeneratorAction.hh"
 
 #include "G4RunManager.hh"
@@ -90,51 +90,17 @@ namespace B4
     {
         G4int eventID = anEvent->GetEventID();
         
-        // REMOVED: Problematic energy assignment from empty vector
-        // G4double energyMeV = energias[eventID % energias.size()];
-
-        // Set fixed energy instead
+        // Set fixed energy
         G4double energyMeV = 2.5; // 2.5 MeV fixed energy
-
-        auto analysisManager = G4AnalysisManager::Instance();
-        // REMOVED: Problematic histogram filling
-        // analysisManager->FillH1(2, energyMeV); // Energ�a en MeV
-        // analysisManager->FillNtupleDColumn(2, energyMeV);
-        // analysisManager->AddNtupleRow();
-
-        // Set gun energy
         fParticleGun->SetParticleEnergy(energyMeV * MeV);
 
-        // Set gun position
-        G4double xmin = -5 * cm;
-        G4double xmax = +5 * cm;
-        G4double randomx = xmin + (xmax - xmin) * G4UniformRand();
+        // Set neutron position at front of detector, pointing toward converter then gas
+        G4double zpos = 0.5 * cm; // front of detector/converter
+        fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., zpos));
 
-        G4double ymin = -5 * cm;
-        G4double ymax = +5 * cm;
-        G4double randomy = ymin + (ymax - ymin) * G4UniformRand();
+        // Set neutron direction (negative Z → toward converter then gas)
+        fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.0, 0.0, -1.0));
 
-        G4double zpos = 0.5 * cm;
-        G4double xpos = 10 * cm;
-        // Choose one of these positions:
-        // fParticleGun->SetParticlePosition(G4ThreeVector(randomx, randomy, 0)); // Random inside detector
-        // fParticleGun->SetParticlePosition(G4ThreeVector(0, 0, 0));             // Centered inside detector
-        fParticleGun->SetParticlePosition(G4ThreeVector(0, 0, zpos));       // Pointing to detector from front
-
-        // Set gun direction
-        G4double detsize = 5 * cm;
-        G4double ratio = xpos / std::sqrt(detsize*detsize + xpos*xpos);
-        // G4double cosTheta = (1 - ratio) * G4UniformRand() + ratio, phi = twopi * G4UniformRand(); 
-        G4double cosTheta = 2 * G4UniformRand() - 1, phi = twopi * G4UniformRand();
-        G4double sinTheta = std::sqrt(1. - cosTheta * cosTheta);
-        G4double uz = sinTheta * std::cos(phi),
-                 uy = sinTheta * std::sin(phi),
-                 ux = cosTheta;
-        
-        // Choose one of these directions:
-        fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.0, 0.0, -1.0)); // Pointing directly into detector
-        // fParticleGun->SetParticleMomentumDirection(G4ThreeVector(-ux, uy, uz));   // Solid angle distribution
-        
         fParticleGun->GeneratePrimaryVertex(anEvent);
     }
 
