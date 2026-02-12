@@ -2,9 +2,9 @@
 #define PRIMARYGENERATORACTION_HH
 
 #include "G4VUserPrimaryGeneratorAction.hh"
-#include "G4ParticleGun.hh"  // ADD THIS LINE
+#include "G4ParticleGun.hh"  
 
-class G4ParticleGun;  // ADD THIS LINE (forward declaration)
+class G4ParticleGun;  
 
 namespace B4
 {

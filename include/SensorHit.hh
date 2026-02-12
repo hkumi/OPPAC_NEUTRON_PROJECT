@@ -7,7 +7,7 @@
 #include "G4THitsCollection.hh"
 #include "G4Allocator.hh"
 #include "G4ThreeVector.hh"
-#include "G4Threading.hh"  // Add this!
+#include "G4Threading.hh"  
 
 class SensorHit : public G4VHit {
 public:
@@ -18,7 +18,7 @@ public:
     const SensorHit& operator=(const SensorHit&);
     int operator==(const SensorHit&) const;
 
-    // operator new/delete for G4
+    
     static void* operator new(size_t);
     static void operator delete(void*);
 
@@ -50,7 +50,7 @@ private:
 // Vector collection of hits
 typedef G4THitsCollection<SensorHit> SensorHitsCollection;
 
-// CRITICAL: Thread-local allocator
+// Thread-local allocator
 extern G4ThreadLocal G4Allocator<SensorHit>* SensorHitAllocator;
 
 #endif

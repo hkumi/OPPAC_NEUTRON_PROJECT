@@ -7,7 +7,7 @@
 class G4VPhysicalVolume;
 class G4LogicalVolume;
 class G4GlobalMagFieldMessenger;
-
+class EventAction;
 namespace B4
 {
 
