@@ -1,42 +1,18 @@
 // ********************************************************************
-// * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
+// SteppingAction.cc
 // ********************************************************************
-//
-//
-/// \file B4/B4a/src/SteppingAction.cc
-/// \brief Implementation of the B4a::SteppingAction class
 
 #include "SteppingAction.hh"
 #include "EventAction.hh"
 #include "DetectorConstruction.hh"
-
+#include "EventAction.hh"
 #include "G4Step.hh"
 #include "G4RunManager.hh"
 #include "G4AnalysisManager.hh"
-
 #include "G4LogicalVolumeStore.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4ParticleTypes.hh"
+#include "G4SystemOfUnits.hh"
 
 using namespace B4;
 
@@ -55,12 +31,51 @@ SteppingAction::SteppingAction(const DetectorConstruction* detConstruction,
 
 void SteppingAction::UserSteppingAction(const G4Step* step)
 {
-  // get volume of the current step
+  // Get volume of the current step
   auto volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
   auto particle = step->GetTrack()->GetDefinition();
   G4String volName = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume()->GetName();
   
-  // process of post and pre step points
+  // Get track
+  G4Track* track = step->GetTrack();
+  
+  // ========================================================================
+  // CAPTURE FIRST CHARGED PARTICLE INFORMATION
+  // ========================================================================
+  // This captures the interaction position and direction for angle analysis
+  
+  if (!fEventAction->IsPositionSet() && 
+      particle->GetPDGCharge() != 0)  // Any charged particle
+  {
+      // Get vertex position (where particle was created)
+      G4ThreeVector pos = track->GetVertexPosition();
+      
+      // Get vertex momentum direction (initial direction)
+      G4ThreeVector dir = track->GetVertexMomentumDirection();
+      
+      // Store in EventAction
+      fEventAction->SetInteractionPosition(pos);
+      fEventAction->SetPrimaryDirection(dir);
+      
+      // Debug output
+      G4cout << "\n=== CAPTURED IN STEPPING ACTION ===" << G4endl;
+      G4cout << "Particle: " << particle->GetParticleName() << G4endl;
+      G4cout << "Volume: " << volName << G4endl;
+      G4cout << "Parent ID: " << track->GetParentID() << G4endl;
+      G4cout << "Position: (" << pos.x()/mm << ", " << pos.y()/mm << ", " << pos.z()/mm << ") mm" << G4endl;
+      G4cout << "Direction: (" << dir.x() << ", " << dir.y() << ", " << dir.z() << ")" << G4endl;
+      
+      // Calculate angles
+      double theta = std::acos(std::abs(dir.z())) * 180.0 / CLHEP::pi;
+      double phi = std::atan2(dir.y(), dir.x()) * 180.0 / CLHEP::pi;
+      G4cout << "Theta: " << theta << " degrees" << G4endl;
+      G4cout << "Phi: " << phi << " degrees" << G4endl;
+      G4cout << "====================================\n" << G4endl;
+  }
+  
+ 
+  
+  // Process of post and pre step points
   const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
   G4String processName = process->GetProcessName();
   const G4VProcess* preProcess = step->GetPreStepPoint()->GetProcessDefinedStep();
@@ -106,11 +121,11 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       else if (copyNo < 100) { 
           analysisManager->FillH1(4, copyNo - 75);  // SiPM_right
       }
-
       
       step->GetTrack()->SetTrackStatus(fStopAndKill);  
   }
 }
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 }

@@ -1,29 +1,15 @@
-// ********************************************************************
-// * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
-// ********************************************************************
+// ============================================================================
+// PrimaryGeneratorAction.cc
 //
-/// \file B4/B4a/src/PrimaryGeneratorAction.cc
-/// \brief Implementation of the B4::PrimaryGeneratorAction class
+// Shoots a 2.5 MeV neutron beam along +Z.
+//
+// BEAM PROFILE – controlled by the flag below:
+//
+//   USE_POINT_SOURCE = true   → pencil beam at (0, 0)      ← current setting
+//   USE_POINT_SOURCE = false  → Gaussian profile σ = 5 mm  ← switch when ready
+//
+// Change the one flag to switch; nothing else needs editing.
+// ============================================================================
 
 #include "PrimaryGeneratorAction.hh"
 
@@ -40,68 +26,66 @@
 #include "G4AnalysisManager.hh"
 #include "G4PhysicalConstants.hh"
 #include "Randomize.hh"
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <stdexcept>
 
 namespace B4
 {
-    // REMOVED: The problematic energias vector
-    // static std::vector<G4double> energias;
 
-    PrimaryGeneratorAction::PrimaryGeneratorAction()
-    {
-        G4int nofParticles = 1;
-        fParticleGun = new G4ParticleGun(nofParticles);
+// ── Beam-profile switch ──────────────────────────────────────────────────────
+// true  = pencil beam at (0,0) — use this to compare algorithms
+// false = Gaussian beam σ = 5 mm — use for imaging
+static constexpr bool USE_POINT_SOURCE = true;
+static constexpr double BEAM_SIGMA     = 5.0;  // mm (only used when false)
+// ────────────────────────────────────────────────────────────────────────────
 
-        auto particleDefinition = G4ParticleTable::GetParticleTable()->FindParticle("neutron");
-        fParticleGun->SetParticleDefinition(particleDefinition);
-        fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
+// ── Constructor ──────────────────────────────────────────────────────────────
+PrimaryGeneratorAction::PrimaryGeneratorAction()
+{
+    fParticleGun = new G4ParticleGun(1);
 
-        // REMOVED: The problematic file loading code
-        /*
-        if (energias.empty()) {
-            std::ifstream infile("1e6.txt");
-            if (!infile.is_open()) {
-                G4Exception("PrimaryGeneratorAction", "FileError", FatalException, "No se pudo abrir 1e6.txt");
-            }
+    auto* particleDef =
+        G4ParticleTable::GetParticleTable()->FindParticle("neutron");
+    fParticleGun->SetParticleDefinition(particleDef);
 
-            std::string line;
-            while (std::getline(infile, line)) {
-                if (!line.empty()) {
-                    energias.push_back(std::stod(line));
-                }
-            }
+    //  direction: straight along +Z
+    fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
 
-            if (energias.empty()) {
-                G4Exception("PrimaryGeneratorAction", "EmptyFile", FatalException, "Archivo 1e6.txt vac�o.");
-            }
-        }
-        */
-    }
-
-    PrimaryGeneratorAction::~PrimaryGeneratorAction()
-    {
-        delete fParticleGun;
-    }
-
-    void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
-    {
-        G4int eventID = anEvent->GetEventID();
-        
-        // Set fixed energy
-        G4double energyMeV = 2.5; // 2.5 MeV fixed energy
-        fParticleGun->SetParticleEnergy(energyMeV * MeV);
-
-        // Set neutron position at front of detector, pointing toward converter then gas
-        G4double zpos = 0.5 * cm; // front of detector/converter
-        fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., zpos));
-
-        // Set neutron direction (negative Z → toward converter then gas)
-        fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.0, 0.0, -1.0));
-
-        fParticleGun->GeneratePrimaryVertex(anEvent);
-    }
-
+    G4cout << "PrimaryGeneratorAction: "
+           << (USE_POINT_SOURCE ? "POINT SOURCE at (0,0)"
+                                : "GAUSSIAN beam  sigma=" +
+                                  std::to_string(BEAM_SIGMA) + " mm")
+           << G4endl;
 }
+
+// ── Destructor ───────────────────────────────────────────────────────────────
+PrimaryGeneratorAction::~PrimaryGeneratorAction()
+{
+    delete fParticleGun;
+}
+
+// ── GeneratePrimaries ────────────────────────────────────────────────────────
+void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
+{
+    // Energy: 2.5 MeV neutrons
+    fParticleGun->SetParticleEnergy(2.5 * MeV);
+
+    // Transverse position
+    G4double xpos = 0.0;
+    G4double ypos = 0.0;
+
+    if (!USE_POINT_SOURCE) {
+        // Gaussian beam 
+        xpos = CLHEP::RandGauss::shoot(0.0, BEAM_SIGMA * mm);
+        ypos = CLHEP::RandGauss::shoot(0.0, BEAM_SIGMA * mm);
+    }
+    // else: both remain 0.0  (pencil beam)
+
+    // Starting position: -0.5 cm upstream of the valve (valve at z = -15 cm)
+    G4double zpos = -0.5 * cm;
+
+    fParticleGun->SetParticlePosition(G4ThreeVector(xpos, ypos, zpos));
+    fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.0, 0.0, 1.0));
+
+    fParticleGun->GeneratePrimaryVertex(anEvent);
+}
+
+} // namespace B4

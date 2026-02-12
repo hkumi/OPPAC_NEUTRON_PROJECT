@@ -18,24 +18,7 @@
 
 
 //......................................
-/*
-PhysicsList::PhysicsList()
-	:G4VModularPhysicsList()
-{
-	SetVerboseLevel(1);
 
-	// add new units
-	new G4UnitDefinition("millielectronVolt", "meV", "Energy", 1.e-3 * eV);
-	new G4UnitDefinition("mm2/g", "mm2/g", "Surface/Mass", mm2 / g);
-	new G4UnitDefinition("um2/mg", "um2/g", "Surface/Mass", um * um / mg);
-
-	// particles
-	//ConstructParticle();
-
-	// neutron physics
-	RegisterPhysics(new NeutronHPphysics("neutronHP"));
-}
-*/
 
 PhysicsList::PhysicsList()
 	: G4VModularPhysicsList()
