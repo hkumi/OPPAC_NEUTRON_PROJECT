@@ -4,7 +4,7 @@
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4ParticleGun.hh"  
 
-class G4ParticleGun;  
+class G4ParticleGun; 
 
 namespace B4
 {

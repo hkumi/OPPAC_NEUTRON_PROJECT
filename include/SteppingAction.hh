@@ -42,6 +42,11 @@ namespace B4a
 
 class EventAction;
 
+/// Stepping action class.
+///
+/// In UserSteppingAction() there are collected the energy deposit and track
+/// lengths of charged particles in Absober and Gap layers and
+/// updated in EventAction.
 
 class SteppingAction : public G4UserSteppingAction
 {

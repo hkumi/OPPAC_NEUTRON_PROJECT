@@ -18,7 +18,7 @@ public:
     const SensorHit& operator=(const SensorHit&);
     int operator==(const SensorHit&) const;
 
-    
+    // operator new/delete for G4
     static void* operator new(size_t);
     static void operator delete(void*);
 
