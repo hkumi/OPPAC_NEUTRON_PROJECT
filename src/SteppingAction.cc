@@ -40,7 +40,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   G4Track* track = step->GetTrack();
   
   // ========================================================================
-  // CAPTURE FIRST CHARGED PARTICLE INFORMATION
+  //  CAPTURE FIRST CHARGED PARTICLE INFORMATION
   // ========================================================================
   // This captures the interaction position and direction for angle analysis
   
@@ -73,7 +73,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       G4cout << "====================================\n" << G4endl;
   }
   
- 
+  // ========================================================================
+ //========================================================================
   
   // Process of post and pre step points
   const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();

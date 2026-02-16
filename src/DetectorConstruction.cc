@@ -315,8 +315,8 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
                                                      false,
                                                      0,
                                                      fCheckOverlaps);
-  /*  
-    // ========================================================================
+    
+   /* // ========================================================================
     // Valve Phantom
     // ========================================================================
     G4double valveRadius = 8.0 * mm;
@@ -612,7 +612,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
     
     fLBox->SetVisAttributes(G4VisAttributes(G4Colour(0.0, 1.0, 1.0, 0.2)));
     logicWorld->SetVisAttributes(G4VisAttributes::GetInvisible());
-    
+    fLBox->SetVisAttributes(G4VisAttributes::GetInvisible());
     return physWorld;
 }
 

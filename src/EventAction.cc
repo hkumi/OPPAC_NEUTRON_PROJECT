@@ -44,7 +44,7 @@ void EventAction::EndOfEventAction(const G4Event* event)
       }
   }
   
-  // Debug output at end of event
+  //  Debug output at end of event
   if (fPosSet) {
       G4cout << "EventAction: Captured position: (" 
              << fInteractionPos.x()/CLHEP::mm << ", " 
