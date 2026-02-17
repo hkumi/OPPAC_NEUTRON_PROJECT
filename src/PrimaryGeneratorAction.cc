@@ -82,8 +82,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     G4double xpos = 0;
     G4double ypos = 0;
     
-    // Starting position: 5 cm before valve (valve at z = -15 cm)
-    G4double zpos = -0.5 * cm;
+    // Starting position: 5 cm before valve (valve at z = -20.0 cm)
+    G4double zpos = -0.50 * cm;
     
     fParticleGun->SetParticlePosition(G4ThreeVector(xpos, ypos, zpos));
     fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.0, 0.0, 1.0));

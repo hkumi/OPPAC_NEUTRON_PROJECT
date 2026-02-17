@@ -2,7 +2,6 @@
 // detector.cc - COMPLETE IMPLEMENTATION WITH ANGLE CALCULATIONS
 // Records TRUE INTERACTION position from EventAction
 // Calculates angle-dependent resolution
-// Supports full + border reconstruction
 // ============================================================================
 
 #include "detector.hh"
@@ -165,7 +164,6 @@ void MySensitiveDetector::ReconstructFullEvent(
     man->FillH1(7, y_rec/mm);
     man->FillH2(0, x_rec/mm, y_rec/mm);
 
-    man->FillH2(0, x_rec/mm, y_rec/mm);
     man->FillH1(8, dx/mm);
     man->FillH1(9, dy/mm);
     man->FillH1(13, resolution/mm);
@@ -285,7 +283,7 @@ void MySensitiveDetector::EndOfEvent(G4HCofThisEvent*)
 
     int arrays = (!t.empty())+(!b.empty())+(!l.empty())+(!r.empty());
 
-    if (arrays>=4)
+    if (arrays>=2)
         ReconstructFullEvent(t,b,l,r);
    // else if (arrays>=2)
         //ReconstructBorderEvent(t,b,l,r,arrays);

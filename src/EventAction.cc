@@ -37,7 +37,7 @@ void EventAction::EndOfEventAction(const G4Event* event)
       G4PrimaryVertex* vertex = event->GetPrimaryVertex(iVertex);
       G4PrimaryParticle* primary = vertex->GetPrimary();
       
-      if (primary->GetPDGcode() == 2112) { // neutron=2112; gamma=22
+      if (primary->GetPDGcode() == 2112) {
           auto analysisManager = G4AnalysisManager::Instance();
           auto eventID = event->GetEventID();
           auto printModulo = G4RunManager::GetRunManager()->GetPrintProgress();

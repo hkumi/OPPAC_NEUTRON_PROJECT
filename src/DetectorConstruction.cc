@@ -316,14 +316,14 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
                                                      0,
                                                      fCheckOverlaps);
     
-   /* // ========================================================================
+    // ========================================================================
     // Valve Phantom
     // ========================================================================
-    G4double valveRadius = 8.0 * mm;
+   /* G4double valveRadius = 8.0 * mm;
     G4double valveLength = 4.0 * mm;
     G4double cavityRadius = 5.0 * mm - 0.01*mm;
     G4double cavityLength = 4.0 * mm - 0.02*mm;
-    G4double stemRadius = 2.0 * mm;
+    G4double stemRadius = 1.95 * mm;
     G4double stemLength = 3.5 * mm;
     
     // Valve body (hollow steel cylinder)
@@ -507,7 +507,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
     G4LogicalVolume* fLConv = new G4LogicalVolume(sConv, HDPE, "Conv");
     
     new G4PVPlacement(0,
-                     G4ThreeVector(0, 0, -convPos),
+                     G4ThreeVector(0, 0, convPos),
                      fLConv,
                      "Conv",
                      fLBox,
@@ -610,9 +610,9 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
     G4VisAttributes* stemVis = new G4VisAttributes(G4Colour(0.8, 0.8, 0.0, 0.8));
     logicStem->SetVisAttributes(stemVis);*/
     
-    fLBox->SetVisAttributes(G4VisAttributes(G4Colour(0.0, 1.0, 1.0, 0.2)));
+    //fLBox->SetVisAttributes(G4VisAttributes(G4Colour(0.0, 1.0, 1.0, 0.2)));
     logicWorld->SetVisAttributes(G4VisAttributes::GetInvisible());
-    fLBox->SetVisAttributes(G4VisAttributes::GetInvisible());
+     fLBox->SetVisAttributes(G4VisAttributes::GetInvisible());
     return physWorld;
 }
 
