@@ -283,7 +283,7 @@ void MySensitiveDetector::EndOfEvent(G4HCofThisEvent*)
 
     int arrays = (!t.empty())+(!b.empty())+(!l.empty())+(!r.empty());
 
-    if (arrays>=2)
+    if (arrays==4)
         ReconstructFullEvent(t,b,l,r);
    // else if (arrays>=2)
         //ReconstructBorderEvent(t,b,l,r,arrays);
