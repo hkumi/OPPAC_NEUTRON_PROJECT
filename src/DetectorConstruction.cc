@@ -350,7 +350,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
                                                           "ValveBody");
     
     new G4PVPlacement(nullptr,
-                      G4ThreeVector(0, 0, -15*cm),
+                      G4ThreeVector(0, 0, 15*cm),
                       logicValveBody,
                       "ValveBody",
                       logicWorld,

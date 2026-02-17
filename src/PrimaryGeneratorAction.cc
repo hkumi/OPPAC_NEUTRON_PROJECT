@@ -81,10 +81,10 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     G4double ypos = CLHEP::RandGauss::shoot(0.0, sigma);
     
     // Starting position: 5 cm before valve (valve at z = -15 cm)
-    G4double zpos = -20.0 * cm;
+    G4double zpos = 20.0 * cm;
     
     fParticleGun->SetParticlePosition(G4ThreeVector(xpos, ypos, zpos));
-    fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.0, 0.0, 1.0));
+    fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.0, 0.0, -1.0));
     
     fParticleGun->GeneratePrimaryVertex(anEvent);
 }
