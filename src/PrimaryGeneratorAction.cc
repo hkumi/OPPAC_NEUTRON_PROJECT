@@ -77,13 +77,11 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     
     // Gaussian beam profile with 5 mm standard deviation
     G4double sigma = 5.0 * mm;
-    //G4double xpos = CLHEP::RandGauss::shoot(0.0, sigma);
-    //G4double ypos = CLHEP::RandGauss::shoot(0.0, sigma);
-    G4double xpos = 0;
-    G4double ypos = 0;
+    G4double xpos = CLHEP::RandGauss::shoot(0.0, sigma);
+    G4double ypos = CLHEP::RandGauss::shoot(0.0, sigma);
     
-    // Starting position: 5 cm before valve (valve at z = -20.0 cm)
-    G4double zpos = -0.50 * cm;
+    // Starting position: 5 cm before valve (valve at z = -15 cm)
+    G4double zpos = -20.0 * cm;
     
     fParticleGun->SetParticlePosition(G4ThreeVector(xpos, ypos, zpos));
     fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.0, 0.0, 1.0));

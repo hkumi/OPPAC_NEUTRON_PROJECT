@@ -35,6 +35,7 @@
 #include "DetectorConstruction.hh"
 
 
+
 namespace B4a
 {
 
@@ -59,14 +60,14 @@ void ActionInitialization::Build() const
 
   SetUserAction(new B4::PrimaryGeneratorAction);
   
-  
+
   SetUserAction(new B4::RunAction);
   
- 
+
   auto eventAction = new EventAction;
   SetUserAction(eventAction);
   
-  
+
   SetUserAction(new SteppingAction(fDetConstruction, eventAction));
 }
 

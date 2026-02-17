@@ -22,7 +22,7 @@ void EventAction::BeginOfEventAction(const G4Event* /*event*/)
   fEnergySiPM = 0.;
   fEnergySiPM2 = 0.;
   
-  //  Reset particle tracking flags
+  // NEW: Reset particle tracking flags
   fPosSet = false;
   fInteractionPos = G4ThreeVector(0, 0, 0);
   fPrimaryDirection = G4ThreeVector(0, 0, 0);
@@ -37,14 +37,14 @@ void EventAction::EndOfEventAction(const G4Event* event)
       G4PrimaryVertex* vertex = event->GetPrimaryVertex(iVertex);
       G4PrimaryParticle* primary = vertex->GetPrimary();
       
-      if (primary->GetPDGcode() == 2112) {
+      if (primary->GetPDGcode() == 2112) { // neutron=2112; gamma=22
           auto analysisManager = G4AnalysisManager::Instance();
           auto eventID = event->GetEventID();
           auto printModulo = G4RunManager::GetRunManager()->GetPrintProgress();
       }
   }
   
-  //  Debug output at end of event
+  // NEW: Debug output at end of event
   if (fPosSet) {
       G4cout << "EventAction: Captured position: (" 
              << fInteractionPos.x()/CLHEP::mm << ", " 

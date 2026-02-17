@@ -319,11 +319,11 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
     // ========================================================================
     // Valve Phantom
     // ========================================================================
-   /* G4double valveRadius = 8.0 * mm;
+    G4double valveRadius = 8.0 * mm;
     G4double valveLength = 4.0 * mm;
     G4double cavityRadius = 5.0 * mm - 0.01*mm;
     G4double cavityLength = 4.0 * mm - 0.02*mm;
-    G4double stemRadius = 1.95 * mm;
+    G4double stemRadius = 2.0 * mm;
     G4double stemLength = 3.5 * mm;
     
     // Valve body (hollow steel cylinder)
@@ -401,7 +401,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
                       logicCavity,
                       false,
                       0,
-                      fCheckOverlaps);*/
+                      fCheckOverlaps);
     
     // ========================================================================
     // Detector Box
@@ -601,18 +601,18 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
     sipmVisAtt->SetForceSolid(true);
     fLSiPM->SetVisAttributes(sipmVisAtt);
     
-   /* G4VisAttributes* valveVis = new G4VisAttributes(G4Colour(0.5, 0.5, 0.5, 0.7));
+    G4VisAttributes* valveVis = new G4VisAttributes(G4Colour(0.5, 0.5, 0.5, 0.7));
     logicValveBody->SetVisAttributes(valveVis);
     
     G4VisAttributes* cavityVis = new G4VisAttributes(G4Colour(0.0, 0.5, 1.0, 0.5));
     logicCavity->SetVisAttributes(cavityVis);
     
     G4VisAttributes* stemVis = new G4VisAttributes(G4Colour(0.8, 0.8, 0.0, 0.8));
-    logicStem->SetVisAttributes(stemVis);*/
+    logicStem->SetVisAttributes(stemVis);
     
-    //fLBox->SetVisAttributes(G4VisAttributes(G4Colour(0.0, 1.0, 1.0, 0.2)));
+    fLBox->SetVisAttributes(G4VisAttributes(G4Colour(0.0, 1.0, 1.0, 0.2)));
     logicWorld->SetVisAttributes(G4VisAttributes::GetInvisible());
-     fLBox->SetVisAttributes(G4VisAttributes::GetInvisible());
+    
     return physWorld;
 }
 
