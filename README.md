@@ -164,12 +164,12 @@ make -j$(nproc)
 
 ### Batch mode
 ```bash
-./sim run.mac
+./example4a -m run.mac
 ```
 
 ### Interactive / Visualisation mode
 ```bash
-./sim vis.mac
+./example4a
 ```
 
 ### Recommended run.mac
