@@ -21,7 +21,7 @@ class EventAction : public G4UserEventAction
     void BeginOfEventAction(const G4Event* event) override;
     void EndOfEventAction(const G4Event* event) override;
 
-    //  Methods to store and retrieve particle information
+    // NEW: Methods to store and retrieve particle information
     void SetInteractionPosition(const G4ThreeVector& pos) { fInteractionPos = pos; fPosSet = true; }
     void SetPrimaryDirection(const G4ThreeVector& dir) { fPrimaryDirection = dir; }
     
@@ -33,7 +33,7 @@ class EventAction : public G4UserEventAction
     G4double fEnergySiPM = 0.;
     G4double fEnergySiPM2 = 0.;
     
-    // Store particle tracking information
+    // NEW: Store particle tracking information
     G4ThreeVector fInteractionPos;
     G4ThreeVector fPrimaryDirection;
     G4bool fPosSet = false;

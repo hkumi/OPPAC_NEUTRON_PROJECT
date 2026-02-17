@@ -7,7 +7,7 @@
 #include "G4THitsCollection.hh"
 #include "G4Allocator.hh"
 #include "G4ThreeVector.hh"
-#include "G4Threading.hh"  
+#include "G4Threading.hh"  // Add this!
 
 class SensorHit : public G4VHit {
 public:
@@ -50,7 +50,7 @@ private:
 // Vector collection of hits
 typedef G4THitsCollection<SensorHit> SensorHitsCollection;
 
-// Thread-local allocator
+// CRITICAL: Thread-local allocator
 extern G4ThreadLocal G4Allocator<SensorHit>* SensorHitAllocator;
 
 #endif
