@@ -145,8 +145,8 @@ GEANT4_BUILD_MULTITHREADED=ON
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/neutron-imaging-sim.git
-cd neutron-imaging-sim
+git clone (https://github.com/hkumi/OPPAC_NEUTRON_PROJECT.git)
+cd OPPAC_NEUTRON_PROJECT
 
 # Create build directory
 mkdir build && cd build
