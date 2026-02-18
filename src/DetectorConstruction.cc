@@ -323,7 +323,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
     G4double valveLength = 4.0 * mm;
     G4double cavityRadius = 5.0 * mm - 0.01*mm;
     G4double cavityLength = 4.0 * mm - 0.02*mm;
-    G4double stemRadius = 2.0 * mm;
+    G4double stemRadius = 1.95 * mm;
     G4double stemLength = 3.5 * mm;
     
     // Valve body (hollow steel cylinder)
@@ -350,7 +350,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes(G4double pitch, G4double 
                                                           "ValveBody");
     
     new G4PVPlacement(nullptr,
-                      G4ThreeVector(0, 0, 15*cm),
+                      G4ThreeVector(0, 0, -15*cm),
                       logicValveBody,
                       "ValveBody",
                       logicWorld,

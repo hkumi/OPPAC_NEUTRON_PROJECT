@@ -57,7 +57,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       fEventAction->SetInteractionPosition(pos);
       fEventAction->SetPrimaryDirection(dir);
       
-      // Debug output
+     /* // Debug output
       G4cout << "\n=== CAPTURED IN STEPPING ACTION ===" << G4endl;
       G4cout << "Particle: " << particle->GetParticleName() << G4endl;
       G4cout << "Volume: " << volName << G4endl;
@@ -70,7 +70,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       double phi = std::atan2(dir.y(), dir.x()) * 180.0 / CLHEP::pi;
       G4cout << "Theta: " << theta << " degrees" << G4endl;
       G4cout << "Phi: " << phi << " degrees" << G4endl;
-      G4cout << "====================================\n" << G4endl;
+      G4cout << "====================================\n" << G4endl;*/
   }
   
   // ========================================================================

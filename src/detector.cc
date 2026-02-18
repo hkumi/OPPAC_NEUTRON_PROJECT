@@ -249,11 +249,11 @@ void MySensitiveDetector::ReconstructFullEvent(
     G4cout << "****************************\n" << G4endl;*/
     
     // Fill angle-dependent histograms
-    man->FillH2(2, theta, dx/mm );          // H2(2): theta vs ΔX
-    man->FillH2(3, theta, dy/mm );          // H2(3): theta vs ΔY
-    man->FillH2(4, theta, resolution/mm );  // H2(4): theta vs resolution
-    man->FillH2(5, phi, dx/mm );            // H2(5): phi vs ΔX
-    man->FillH2(6, phi, dy/mm );            // H2(6): phi vs ΔY
+    man->FillH2(2, theta, dx );          // H2(2): theta vs ΔX
+    man->FillH2(3, theta, dy );          // H2(3): theta vs ΔY
+    man->FillH2(4, theta, resolution );  // H2(4): theta vs resolution
+    man->FillH2(5, phi, dx );            // H2(5): phi vs ΔX
+    man->FillH2(6, phi, dy );            // H2(6): phi vs ΔY
 
     // ========================================================================
     // FILL NTUPLES
@@ -269,15 +269,15 @@ void MySensitiveDetector::ReconstructFullEvent(
     man->AddNtupleRow(4);*/
 
     // Fill AngleAnalysis ntuple (ID 5)
-    man->FillNtupleDColumn(5, 0, x_rec/mm );
-    man->FillNtupleDColumn(5, 1, y_rec/mm );
-    man->FillNtupleDColumn(5, 2, x_true/mm );
-    man->FillNtupleDColumn(5, 3, y_true/mm );
-    man->FillNtupleDColumn(5, 4, dx/mm );
-    man->FillNtupleDColumn(5, 5, dy/mm );
+    man->FillNtupleDColumn(5, 0, x_rec );
+    man->FillNtupleDColumn(5, 1, y_rec );
+    man->FillNtupleDColumn(5, 2, x_true );
+    man->FillNtupleDColumn(5, 3, y_true );
+    man->FillNtupleDColumn(5, 4, dx );
+    man->FillNtupleDColumn(5, 5, dy );
     man->FillNtupleDColumn(5, 6, theta);
     man->FillNtupleDColumn(5, 7, phi);
-    man->FillNtupleDColumn(5, 8, resolution/mm );
+    man->FillNtupleDColumn(5, 8, resolution );
     man->AddNtupleRow(5);
 }
 
@@ -289,7 +289,7 @@ void MySensitiveDetector::ReconstructBorderEvent(
         const std::vector<double>& yRight,
         int nArrays)
 {
-   /* std::lock_guard<std::mutex> lock(analysisMutex);
+    std::lock_guard<std::mutex> lock(analysisMutex);
     auto* man = G4AnalysisManager::Instance();
 
     // Check if EventAction is available
@@ -341,8 +341,8 @@ void MySensitiveDetector::ReconstructBorderEvent(
                           double p2, double n2, double s2)
     {
         if (n1 > 0 && n2 > 0)
-            return (p1 * n1 / (s1*s1) + p2 * n2 / (s2*s2)) /
-                   (n1 / (s1*s1)     + n2 / (s2*s2));
+            return (p1 * n1 / (s1) + p2 * n2 / (s2)) /
+                   (n1 / (s1)     + n2 / (s2));
         else if (n1 > 0) return p1;
         else if (n2 > 0) return p2;
         return 0.0;
@@ -362,7 +362,7 @@ void MySensitiveDetector::ReconstructBorderEvent(
     double dy = y_rec - y_true;
     
     man->FillH1(14, dx / mm);  // Border_Res_X
-    man->FillH1(15, dy / mm);  // Border_Res_Y*/
+    man->FillH1(15, dy / mm);  // Border_Res_Y
 
    /* // Fill Reconstruction ntuple (ID 4) - Border events
     man->FillNtupleDColumn(4, 0, x_rec / mm);
@@ -460,7 +460,7 @@ void MySensitiveDetector::EndOfEvent(G4HCofThisEvent*)
     if (arrays >= 4) {
         ReconstructFullEvent(topI, botI, leftI, rightI);
     }
-    /*else if (arrays >= 2) {
+   /* else if (arrays >= 2) {
         ReconstructBorderEvent(topI, botI, leftI, rightI, arrays);
     }*/
 }
